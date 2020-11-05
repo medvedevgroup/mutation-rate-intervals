@@ -32,9 +32,9 @@ Simulate 1,000 trials, with sketch sizes 100 and 500, then evaluate how well
 they conformed to the theoretical 100-slice confidence interval:
 
 ```bash 
-simulate_unit_errors.py --linear \\\\
-  T=1K L=10K K=21 --poisson=10% \\\\
-  --sketch=100,500 \\\\
+simulate_unit_errors.py --linear \\
+  T=1K L=10K K=21 --poisson=10% \\
+  --sketch=100,500 \\
   > simulation.dat
 
 cat simulation.dat | evaluate_hypergeometric_slicer C=95% --slices=100
