@@ -40,5 +40,3 @@ simulate_unit_errors.py --linear \
 cat simulation.dat | evaluate_hypergeometric_slicer.py --confidence=95% --slices=100
 ```
 
-(more to come)
-
