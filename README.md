@@ -28,5 +28,5 @@ rate of 10%:
 simulate_unit_errors.py --linear T=1K L=10K K=21 --poisson=10%
 ```
 
-(not finished)
+(more to come)
 
