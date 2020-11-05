@@ -1,2 +1,24 @@
 # mutation-rate-intervals
-Support for "statistics of k-mers from a sequence undergoing a simple mutation process without spurious matches"
+
+Support for "Statistics of k-mers from a sequence undergoing a simple mutation
+process without spurious matches," Blanca, Harris, Koslicki and Medvedev. 2020.
+
+### Prerequisites
+
+* python3
+* scipy
+
+Two addition packages are used if present: mpmath and mmh3.
+
+mpmath is a multi-precision package, used here to avoid numerical problems that
+can occur for very low mutation probabilities (e.g. 1e-8). If the module is not
+present standard python floating-point is used instead.
+
+mmh3 is a wrapper for MurmurHash3, used here for hashing kmers for bottom
+sketches. If the module is not present the hashing options in
+simulate_nucleotide_errors are not available.
+
+### Usage Overview
+
+(not finished)
+
