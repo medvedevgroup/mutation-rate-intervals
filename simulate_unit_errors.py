@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 In sequence pairs chosen from the unit interval under a mutation model, compute
-the number of mutated kmers and islands and associtated stats.
+the number of mutated kmers and islands and associated stats.
 """
 
 from sys          import argv,stdin,stdout,stderr,exit

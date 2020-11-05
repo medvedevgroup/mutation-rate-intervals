@@ -1,7 +1,8 @@
 # mutation-rate-intervals
 
-Support for "Statistics of k-mers from a sequence undergoing a simple mutation
-process without spurious matches," Blanca, Harris, Koslicki and Medvedev. 2020.
+Support for "The statistics of k-mers from a sequence undergoing a simple
+mutation process without spurious matches," Blanca, Harris, Koslicki and
+Medvedev. 2020.
 
 ### Prerequisites
 

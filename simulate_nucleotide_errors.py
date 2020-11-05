@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Induce errors in a fasta sequence, under a mutation model, and compute the
-number of mutated kmers and associtated stats.
+number of mutated kmers and associated stats.
 """
 
 from sys          import argv,stdin,stdout,stderr,exit
