@@ -330,7 +330,7 @@ def main():
 	else:
 		statW = max(len(stat) for stat in statsOfInterest)
 		for stat in statsOfInterest:
-			print("%*s = %s" % (stat,statW,statToText[stat]),file=stderr)
+			print("%*s = %s" % (statW,stat,statToText[stat]),file=stderr)
 
 
 # PoissonModel--

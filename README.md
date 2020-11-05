@@ -21,5 +21,12 @@ simulate_nucleotide_errors are not available.
 
 ### Usage Overview
 
+Simulate 1,000 trials for sequences of length 10,000 with k=21 and a mutation
+rate of 10%:
+
+```bash 
+simulate_unit_errors.py --linear T=1K L=10K K=21 --poisson=10%
+```
+
 (not finished)
 
