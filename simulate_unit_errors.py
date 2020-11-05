@@ -564,7 +564,7 @@ def sample_mean(observed):
 def sample_variance(observed):
 	if (len(observed) <= 1): return 0.0
 	m = sample_mean(observed)
-	return (float(sum([n**2 for n in observed])) / (len(observed)-1)) - m**2
+	return float(sum([(n-m)**2 for n in observed])) / (len(observed)-1)
 
 def mean_squared_error(observed,predicted):
 	return float(sum([(n-predicted)**2 for n in observed])) / len(observed)
