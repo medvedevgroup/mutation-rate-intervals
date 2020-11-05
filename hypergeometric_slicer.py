@@ -18,7 +18,7 @@ except ModuleNotFoundError:
 	# it can be installed with pip: "python3 -m pip install --user mpmath"
 	mpf = lambda v:float(v)
 
-moduleName = "nLow,nHigh_clipped.v2"
+moduleName = "slicer.v1"
 
 #==========
 # base formulas

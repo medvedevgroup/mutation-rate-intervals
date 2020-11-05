@@ -161,14 +161,15 @@ def main():
 		random_seed(prngSeed.encode("utf-8"))
 		if ("prng" in debug):
 			print("prng = %s" % prngSeed,file=stderr)
-		if (sketchSizes != None):
-			sketchPrngs = {}
-			for sketchSize in sketchSizes:
-				sketchPrngSeed = "%s.%s" % (prngSeed,sketchSize)
-				sketchPrng = RandomState(seed=list(sketchPrngSeed.encode("utf-8")))
-				sketchPrngs[sketchSize] = sketchPrng
-				if ("prng" in debug):
-					print("prng[S=%d] = %s" % (sketchSize,sketchPrngSeed),file=stderr)
+
+	if (sketchSizes != None):
+		sketchPrngs = {}
+		for sketchSize in sketchSizes:
+			sketchPrngSeed = "%s.%s" % (prngSeed,sketchSize)
+			sketchPrng = RandomState(seed=list(sketchPrngSeed.encode("utf-8")))
+			sketchPrngs[sketchSize] = sketchPrng
+			if ("prng" in debug):
+				print("prng[S=%d] = %s" % (sketchSize,sketchPrngSeed),file=stderr)
 
 	# set up model/generator
 
