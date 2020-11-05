@@ -7,6 +7,7 @@ process without spurious matches," Blanca, Harris, Koslicki and Medvedev. 2020.
 
 * python3
 * scipy
+* numpy
 
 Two addition packages are used if present: mpmath and mmh3.
 
