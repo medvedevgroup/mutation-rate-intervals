@@ -34,8 +34,22 @@ simulate_unit_errors.py --linear \
   --sketch=100,500 \
   > simulation.dat
 
-cat simulation.dat | evaluate_hypergeometric_slicer.py --confidence=95% --slices=100
+cat simulation.dat \
+  | evaluate_hypergeometric_slicer.py --confidence=95% --slices=100
 ```
+Simulate 1,000 trials for a real genomic sequence, using a 128 bit
+pseudo-random hash function, then evaluate how well they conformed to the
+theoretical 100-slice confidence interval:
 
-(more to come)
+```bash 
+cat ecoli.fa \
+  | simulate_nucleotide_errors.py --linear \
+      --hashbits=128 --hashseed=314159  \
+      T=1K K=21 --poisson=10% \
+      --sketch=100,500 \
+  > simulation.dat
+
+cat simulation.dat \
+  | evaluate_hypergeometric_slicer.py --confidence=95% --slices=100 --useL.A,B
+```
 
