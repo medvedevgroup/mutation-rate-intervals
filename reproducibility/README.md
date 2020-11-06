@@ -44,7 +44,7 @@ theoretical 100-slice confidence interval:
 ```bash 
 cat ecoli.fa \
   | simulate_nucleotide_errors.py --linear \
-      --hashbits=128 --hashseed=314159  \
+      --hashbits=128  \
       T=1K K=21 --poisson=10% \
       --sketch=100,500 \
   > simulation.dat
