@@ -4,11 +4,31 @@ Support for "The statistics of k-mers from a sequence undergoing a simple
 mutation process without spurious matches," Blanca, Harris, Koslicki and
 Medvedev. 2020.
 
+### Quick start for computing a confidence interval
+
+In a python3 interactive shell:
+```bash 
+L = 4500000        # number of kmers in sequence (4.5M)
+k = 21             # kmer size
+sketchSize = 5000  # size of bottom sketches (5K)
+jHat = 0.20        # jaccard index observed in an experiment
+confidence = 0.95
+numSlices = 100    # number of slices (see manuscript)
+
+hgslicer.r1_confidence_interval(L,k,sketchSize,1-confidence,numSlices,jHat)
+# result is (0.048886239445729, 0.05316000812867323)
+```
+
 ### Prerequisites
 
 * python3
 * scipy
 * numpy
+
+For computing confidence intervals, only scipy is required. An optional
+module, mpmath, will be used if present (as described below).
+
+Numpy is only used by the simulation programs.
 
 Two addition packages are used if present: mpmath and mmh3.
 
@@ -22,22 +42,15 @@ simulate_nucleotide_errors are not available.
 
 ### Usage Overview
 
-Simulate 1,000 trials for sequences of length 10,000 with k=21 and a mutation
-rate of 10%:
+The package has three parts:
+* A module to compute the theoretical confidence intervals described in the
+manuscript: hypergeometric_slicer.py.
+* Two programs to generate simulations: simulate_unit_errors.py and
+simulate_nucleotide_errors.py.
+* A program to evaluate how well the simulations conform to the theoretical
+confidence intervals: evaluate_hypergeometric_slicer.py.
 
-```bash 
-simulate_unit_errors.py --linear T=1K L=10K K=21 --poisson=10%
-```
+Here we describe only the confidence interval module. The simulation and
+evaluation programs are described in the reproducibility folder.
 
-Simulate 1,000 trials, with sketch sizes 100 and 500, then evaluate how well
-they conformed to the theoretical 100-slice confidence interval:
-
-```bash 
-simulate_unit_errors.py --linear \
-  T=1K L=10K K=21 --poisson=10% \
-  --sketch=100,500 \
-  > simulation.dat
-
-cat simulation.dat | evaluate_hypergeometric_slicer.py --confidence=95% --slices=100
-```
-
+(more to come)

@@ -21,143 +21,6 @@ except ModuleNotFoundError:
 moduleName = "slicer.v1"
 
 #==========
-# base formulas
-#==========
-
-def r1_to_q(k,r1):
-	#return 1-(1-r1)**k
-	r1 = mpf(r1)
-	q = 1-(1-r1)**k
-	return float(q)
-
-
-def q_to_r1(k,q):
-	if not (0 <= q <= 1): return float("nan")
-	#return 1-(1-q)**(1.0/k)
-	q = mpf(q)
-	r1 = 1-(1-q)**(1.0/k)
-	return float(r1)
-
-
-def q_to_jaccard(q):
-	if not (0 <= q <= 1): return float("nan")
-	#return (1-q)/(1+q)
-	q = mpf(q)
-	jaccard = (1-q)/(1+q)
-	return float(jaccard)
-
-
-def jaccard_to_q(jaccard):
-	if not (0 <= jaccard <= 1): return float("nan")
-	#return (1-jaccard)/(1+jaccard)
-	jaccard = mpf(jaccard)
-	q = (1-jaccard)/(1+jaccard)
-	return float(q)
-
-
-# probit--
-#
-# see https://stackoverflow.com/questions/20626994/how-to-calculate-the-inverse-of-the-normal-cumulative-distribution-function-in-p
-#
-# nota bene: Because this might be expensive to compute, we back it with a
-#            cache. This implementation would probably be cleaner if it used
-#            the python memoization paradigm.
-
-probit_cache = {}
-def probit(p):
-	cacheKey = p
-	if (cacheKey in probit_cache):
-		return probit_cache[cacheKey]
-
-	z = scipy_norm.ppf(p)
-
-	probit_cache[cacheKey] = z
-	return z
-
-#==========
-# formulas for Nmutated
-#==========
-
-def p_mutated(k,r1):
-	return r1_to_q(k,r1)
-
-
-def p_mutated_inverse(k,q):
-	return q_to_r1(k,r1)
-
-
-def exp_n_mutated(L,k,r1):
-	q = r1_to_q(k,r1)
-	return L*q
-
-
-def var_n_mutated(L,k,r1,q=None):
-	# there are computational issues in the variance formula that we solve here
-	# by the use of higher-precision arithmetic; the problem occurs when r is
-	# very small; for example, with L=10,k=2,r1=1e-6 standard precision
-	# gives varN<0 which is nonsense; by using the mpf type, we get the correct
-	# answer which is about 0.000038
-	if (r1 == 0): return 0.0
-	r1 = mpf(r1)
-	if (q == None): # we assume that if q is provided, it is correct for r1
-		q = r1_to_q(k,r1)
-	q = mpf(q)
-	varN = L*(1-q)*(q*(2*k+(2/r1)-1)-2*k) \
-	     + k*(k-1)*(1-q)**2 \
-	     + (2*(1-q)/(r1**2))*((1+(k-1)*(1-q))*r1-q)
-	assert (varN>=0.0), \
-	       "for L=%d,k=%d,r1=%.9f,q=%.9f var_n_mutated evaluated as %s" \
-	     % (L,k,r1,q,varN)
-
-	return float(varN)
-
-
-def estimate_r1_from_n_mutated(L,k,Nmutated):
-	q = estimate_q_from_n_mutated(L,Nmutated)
-	return q_to_r1(k,q)
-
-
-def estimate_q_from_n_mutated(L,Nmutated):
-	# e[Nmutated] = qL  ==>  q = e[Nmutated]/L
-	return Nmutated / float(L)
-
-#==========
-# formulas for Nisland
-#==========
-
-def exp_n_island(L,k,r1):
-	q = r1_to_q(k,r1)
-	return L*r1*(1-q) + q - r1*(1-q)
-
-def exp_n_island_max(L,k):
-	# maximum value of E[Nisland]
-	return 1 + float(L-2)/(k+1) * ((float(L-2)*k)/((L-1)*(k+1)))**k
-
-
-def exp_n_island_argmax_r1(L,k):
-	# value of r1 which maximizes E[Nisland]
-	return float(L+k-1)/((L-1)*(k+1))
-
-
-def var_n_island(L,k,r1,q=None):
-	# there are computational issues in the variance formula; see the note in
-	# var_n_mutated()
-	if (r1 == 0): return 0.0
-	r1 = mpf(r1)
-	if (q == None): # we assume that if q is provided, it is correct for r1
-		q = r1_to_q(k,r1)
-	q = mpf(q)
-	varN = L*r1*(1-q)*(1-r1*(1-q)*(2*k+1)) \
-	     + (k**2)*(r1**2)*((1-q)**2) \
-	     + k*r1*(3*r1+2)*((1-q)**2) \
-	     + (1-q)*((1-q)*(r1**2)-q-r1)
-	assert (varN>=0.0), \
-	       "for L=%d,k=%d,r1=%.9f,q=%.9f var_n_island evaluated as %s" \
-	     % (L,k,r1,q,varN)
-
-	return float(varN)
-
-#==========
 # 'hypergeometric slicer' formulas for sketch jaccard (from Nmutated)
 #
 # nota bene: Because these can be expensive to compute, we back each function
@@ -601,5 +464,149 @@ def q_right_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 
 	return qLo
 
+#==========
+# formulas for Nmutated
+#==========
 
-if __name__ == "__main__": main()
+def p_mutated(k,r1):
+	return r1_to_q(k,r1)
+
+
+def p_mutated_inverse(k,q):
+	return q_to_r1(k,r1)
+
+
+def exp_n_mutated(L,k,r1):
+	q = r1_to_q(k,r1)
+	return L*q
+
+
+def var_n_mutated(L,k,r1,q=None):
+	# there are computational issues in the variance formula that we solve here
+	# by the use of higher-precision arithmetic; the problem occurs when r is
+	# very small; for example, with L=10,k=2,r1=1e-6 standard precision
+	# gives varN<0 which is nonsense; by using the mpf type, we get the correct
+	# answer which is about 0.000038
+	if (r1 == 0): return 0.0
+	r1 = mpf(r1)
+	if (q == None): # we assume that if q is provided, it is correct for r1
+		q = r1_to_q(k,r1)
+	q = mpf(q)
+	varN = L*(1-q)*(q*(2*k+(2/r1)-1)-2*k) \
+	     + k*(k-1)*(1-q)**2 \
+	     + (2*(1-q)/(r1**2))*((1+(k-1)*(1-q))*r1-q)
+	assert (varN>=0.0), \
+	       "for L=%d,k=%d,r1=%.9f,q=%.9f var_n_mutated evaluated as %s" \
+	     % (L,k,r1,q,varN)
+
+	return float(varN)
+
+
+def estimate_r1_from_n_mutated(L,k,Nmutated):
+	q = estimate_q_from_n_mutated(L,Nmutated)
+	return q_to_r1(k,q)
+
+
+def estimate_q_from_n_mutated(L,Nmutated):
+	# e[Nmutated] = qL  ==>  q = e[Nmutated]/L
+	return Nmutated / float(L)
+
+#==========
+# formulas for Nisland
+#==========
+
+def exp_n_island(L,k,r1):
+	q = r1_to_q(k,r1)
+	return L*r1*(1-q) + q - r1*(1-q)
+
+def exp_n_island_max(L,k):
+	# maximum value of E[Nisland]
+	return 1 + float(L-2)/(k+1) * ((float(L-2)*k)/((L-1)*(k+1)))**k
+
+
+def exp_n_island_argmax_r1(L,k):
+	# value of r1 which maximizes E[Nisland]
+	return float(L+k-1)/((L-1)*(k+1))
+
+
+def var_n_island(L,k,r1,q=None):
+	# there are computational issues in the variance formula; see the note in
+	# var_n_mutated()
+	if (r1 == 0): return 0.0
+	r1 = mpf(r1)
+	if (q == None): # we assume that if q is provided, it is correct for r1
+		q = r1_to_q(k,r1)
+	q = mpf(q)
+	varN = L*r1*(1-q)*(1-r1*(1-q)*(2*k+1)) \
+	     + (k**2)*(r1**2)*((1-q)**2) \
+	     + k*r1*(3*r1+2)*((1-q)**2) \
+	     + (1-q)*((1-q)*(r1**2)-q-r1)
+	assert (varN>=0.0), \
+	       "for L=%d,k=%d,r1=%.9f,q=%.9f var_n_island evaluated as %s" \
+	     % (L,k,r1,q,varN)
+
+	return float(varN)
+
+#==========
+# base formulas
+#==========
+
+def r1_to_q(k,r1):
+	#return 1-(1-r1)**k
+	r1 = mpf(r1)
+	q = 1-(1-r1)**k
+	return float(q)
+
+
+def r1_to_jaccard(k,r1):
+	if not (0 <= r1 <= 1): return float("nan")
+	return q_to_jaccard(r1_to_q(k,r1))
+
+
+def q_to_r1(k,q):
+	if not (0 <= q <= 1): return float("nan")
+	#return 1-(1-q)**(1.0/k)
+	q = mpf(q)
+	r1 = 1-(1-q)**(1.0/k)
+	return float(r1)
+
+
+def q_to_jaccard(q):
+	if not (0 <= q <= 1): return float("nan")
+	#return (1-q)/(1+q)
+	q = mpf(q)
+	jaccard = (1-q)/(1+q)
+	return float(jaccard)
+
+
+def jaccard_to_r1(k,jaccard):
+	if not (0 <= jaccard <= 1): return float("nan")
+	return q_to_r1(k,jaccard_to_q(jaccard))
+
+
+def jaccard_to_q(jaccard):
+	if not (0 <= jaccard <= 1): return float("nan")
+	#return (1-jaccard)/(1+jaccard)
+	jaccard = mpf(jaccard)
+	q = (1-jaccard)/(1+jaccard)
+	return float(q)
+
+
+# probit--
+#
+# see https://stackoverflow.com/questions/20626994/how-to-calculate-the-inverse-of-the-normal-cumulative-distribution-function-in-p
+#
+# nota bene: Because this might be expensive to compute, we back it with a
+#            cache. This implementation would probably be cleaner if it used
+#            the python memoization paradigm.
+
+probit_cache = {}
+def probit(p):
+	cacheKey = p
+	if (cacheKey in probit_cache):
+		return probit_cache[cacheKey]
+
+	z = scipy_norm.ppf(p)
+
+	probit_cache[cacheKey] = z
+	return z
