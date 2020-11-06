@@ -8,6 +8,8 @@ Medvedev. 2020.
 
 In a python3 interactive shell:
 ```bash 
+import hypergeometric_slicer as hgslicer
+
 L = 4500000        # number of kmers in sequence (4.5M)
 k = 21             # kmer size
 sketchSize = 5000  # size of bottom sketches (5K)
@@ -16,6 +18,7 @@ confidence = 0.95
 numSlices = 100    # number of slices (see manuscript)
 
 hgslicer.r1_confidence_interval(L,k,sketchSize,1-confidence,numSlices,jHat)
+# (may take about a minute)
 # result is (0.048886239445729, 0.05316000812867323)
 ```
 
