@@ -51,15 +51,14 @@ def main():
 
 	# parse the command line
 
-	confidence         = None
-	numSlices          = 100
-	useAlternateL      = False
-	maxSketchSize      = None
-	desiredSketchSizes = None
-	whichSlicer        = None
-	detailsFilename    = None
-	reportProgress     = None
-	debug              = []
+	confidence      = None
+	numSlices       = 100
+	useAlternateL   = False
+	maxSketchSize   = None
+	whichSlicer     = None
+	detailsFilename = None
+	reportProgress  = None
+	debug           = []
 
 	for arg in argv[1:]:
 		if ("=" in arg):
