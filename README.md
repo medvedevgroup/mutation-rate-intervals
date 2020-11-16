@@ -4,7 +4,8 @@ Support for "The statistics of k-mers from a sequence undergoing a simple
 mutation process without spurious matches," Blanca, Harris, Koslicki and
 Medvedev. 2020.
 
-### Quick start for computing a confidence interval
+### Quick start for computing a confidence interval for the sketching
+mutation model
 
 In a python3 interactive shell:
 ```bash 
@@ -19,7 +20,29 @@ numSlices = 100    # number of slices (see manuscript)
 
 hgslicer.r1_confidence_interval(L,k,sketchSize,1-confidence,numSlices,jHat)
 # (may take about a minute)
-# result is (0.048886239445729, 0.05316000812867323)
+# result is ≈ (0.048886,0.053160)
+```
+
+### Quick start for computing a confidence interval for r1 from an
+observation of Nmut
+
+In a python3 interactive shell:
+```bash 
+import kmer_mutation_formulas_v1 as v1
+
+L = 4500000        # number of kmers in sequence (4.5M)
+k = 21             # kmer size
+nMut = 3000000     # number of mutated kmers observed in an experiment
+confidence = 0.95
+
+alpha = 1-confidence
+z = v1.probit(1-alpha/2)
+q1 = v1.q_for_n_affected_high(L,k,nMut,z)
+q2 = v1.q_for_n_affected_low (L,k,nMut,z)
+r1Low  = v1.q_to_r1(k,q1)
+r1High = v1.q_to_r1(k,q2)
+(r1Low,r1High)
+# result is ≈ (0.050725,0.051215)
 ```
 
 ### Prerequisites
@@ -45,15 +68,18 @@ simulate_nucleotide_errors are not available.
 
 ### Usage Overview
 
-The package has three parts:
-* A module to compute the theoretical confidence intervals described in the
-manuscript: hypergeometric_slicer.py.
+The package has four parts:
+* A module to compute the theoretical confidence intervals for the sketching
+mutation model described as theorem 6 in the manuscript:
+hypergeometric_slicer.py.
+* A module to compute the theoretical confidence intervals for r1 from an
+observation of Nmut described as theorem 5 in the manuscript:
+kmer_mutation_formulas_v1.py.
 * Two programs to generate simulations: simulate_unit_errors.py and
 simulate_nucleotide_errors.py.
 * A program to evaluate how well the simulations conform to the theoretical
 confidence intervals: evaluate_hypergeometric_slicer.py.
 
-Here we describe only the confidence interval module. The simulation and
+Above we describe only the confidence interval module. The simulation and
 evaluation programs are described in the reproducibility folder.
 
-(more to come)
