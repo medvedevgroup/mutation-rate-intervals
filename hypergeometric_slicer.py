@@ -18,7 +18,14 @@ except ModuleNotFoundError:
 	# it can be installed with pip: "python3 -m pip install --user mpmath"
 	mpf = lambda v:float(v)
 
-moduleName = "slicer.v1"
+# module name
+#   v1 clipped n_low() and n_high() at 0 and L, respectively; but caller was
+#	.. unaware of whether clipping had occurred.
+#   v2 passes an indication of whether clipping occurred back to beta_low() and
+#	.. beta_high() so that only the first clipped result contributes to the
+#	.. corresponding sum
+
+moduleName = "slicer.v2"
 
 #==========
 # 'hypergeometric slicer' formulas for sketch jaccard (from Nmutated)
@@ -73,15 +80,17 @@ def zeta(L,s,Nmutated,a):
 
 n_low_cache = {}
 def n_low(L,k,q,m,i):
-	assert (m>=3)
+	assert (m>=2)
 	assert (0<=i<=m)
 	if (useCache):
 		cacheKey = (L,k,q,m,i)
 		if (cacheKey in n_low_cache):
 			return n_low_cache[cacheKey]
 
+	clipped = False
 	if (i == 0):
 		nLow = 0.0                        # (practical limit)
+		clipped = True
 	else:
 		alphai = float(i) / m
 		zi = probit(1-alphai/2)
@@ -89,24 +98,28 @@ def n_low(L,k,q,m,i):
 		varN = var_n_mutated(L,k,r1,q=q)
 		sigma = sqrt(varN)
 		nLow = L*q - zi*sigma
-		if (nLow < 0): nLow = 0.0         # (practical limit, is it kosher?)
+		if (nLow < 0):
+			nLow = 0.0                    # (practical limit)
+			clipped = True
 
 	if (useCache):
-		n_low_cache[cacheKey] = nLow
-	return nLow
+		n_low_cache[cacheKey] = (nLow,clipped)
+	return (nLow,clipped)
 
 
 n_high_cache = {}
 def n_high(L,k,q,m,i):
-	assert (m>=3)
+	assert (m>=2)
 	assert (0<=i<=m)
 	if (useCache):
 		cacheKey = (L,k,q,m,i)
 		if (cacheKey in n_high_cache):
 			return n_high_cache[cacheKey]
 
+	clipped = False
 	if (i == 0):
 		nHigh = float(L)                  # (practical limit)
+		clipped = True
 	else:
 		alphai = float(i) / m
 		zi = probit(1-alphai/2)
@@ -114,11 +127,13 @@ def n_high(L,k,q,m,i):
 		varN = var_n_mutated(L,k,r1,q=q)
 		sigma = sqrt(varN)
 		nHigh = L*q + zi*sigma
-		if (nHigh > L): nHigh = float(L)  # (practical limit, is it kosher?)
+		if (nHigh > L):
+			nHigh = float(L)              # (practical limit)
+			clipped = True
 
 	if (useCache):
-		n_high_cache[cacheKey] = nHigh
-	return nHigh
+		n_high_cache[cacheKey] = (nHigh,clipped)
+	return (nHigh,clipped)
 
 
 def precompute_n_high_low(L,k,q,m):
@@ -128,8 +143,8 @@ def precompute_n_high_low(L,k,q,m):
 	nHigh = {}
 
 	for i in range(m+1):
-		nLow [i] = n_low(L,k,q,m,i)
-		nHigh[i] = n_high(L,k,q,m,i)
+		(nLow [i],_) = n_low (L,k,q,m,i)
+		(nHigh[i],_) = n_high(L,k,q,m,i)
 
 	# (sanity check)
 
@@ -162,7 +177,7 @@ def precompute_n_high_low(L,k,q,m):
 
 beta_low_cache = {}
 def beta_low(L,k,q,s,m,a):
-	assert (m>=3)
+	assert (m>=2)
 	if (useCache):
 		cacheKey = (L,k,q,s,m,a)
 		if (cacheKey in beta_low_cache):
@@ -170,10 +185,25 @@ def beta_low(L,k,q,s,m,a):
 
 	episilon = 0.0  # placeholder for an error term we're ignoring
 
+	hadAClippedLow = hadAClippedHigh = False
 	betaLow = 0.0
 	for i in range(1,m+1):
-		betaLow += zeta(L,s,ceil(n_low(L,k,q,m,i)),a) \
-		        +  zeta(L,s,ceil(n_high(L,k,q,m,i-1)),a)
+		#betaLow += zeta(L,s,ceil(n_low(L,k,q,m,i)),a) \
+		#        +  zeta(L,s,ceil(n_high(L,k,q,m,i-1)),a)
+
+		(nLow, lowIsClipped)  = n_low (L,k,q,m,i)
+		(nHigh,highIsClipped) = n_high(L,k,q,m,i-1)
+
+		if (not lowIsClipped) or (not hadAClippedLow):
+			betaLow += zeta(L,s,ceil(nLow),a)
+		if (lowIsClipped): 
+			hadAClippedLow = True
+
+		if (not highIsClipped) or (not hadAClippedHigh):
+			betaLow += zeta(L,s,ceil(nHigh),a)
+		if (highIsClipped): 
+			hadAClippedHigh = True
+
 	betaLow /= (2*m + 2*episilon)
 
 	if (useCache):
@@ -183,7 +213,7 @@ def beta_low(L,k,q,s,m,a):
 
 beta_high_cache = {}
 def beta_high(L,k,q,s,m,a):
-	assert (m>=3)
+	assert (m>=2)
 	if (useCache):
 		cacheKey = (L,k,q,s,m,a)
 		if (cacheKey in beta_high_cache):
@@ -191,10 +221,25 @@ def beta_high(L,k,q,s,m,a):
 
 	episilon = 0.0  # placeholder for an error term we're ignoring
 
+	hadAClippedLow = hadAClippedHigh = False
 	betaHigh = 0.0
 	for i in range(1,m+1):
-		betaHigh += zeta(L,s,floor(n_low(L,k,q,m,i-1)),a) \
-		         +  zeta(L,s,floor(n_high(L,k,q,m,i)),a)
+		#betaHigh += zeta(L,s,floor(n_low(L,k,q,m,i-1)),a) \
+		#         +  zeta(L,s,floor(n_high(L,k,q,m,i)),a)
+
+		(nLow, lowIsClipped)  = n_low (L,k,q,m,i-1)
+		(nHigh,highIsClipped) = n_high(L,k,q,m,i)
+
+		if (not lowIsClipped) or (not hadAClippedLow):
+			betaHigh += zeta(L,s,floor(nLow),a)
+		if (lowIsClipped): 
+			hadAClippedLow = True
+
+		if (not highIsClipped) or (not hadAClippedHigh):
+			betaHigh += zeta(L,s,floor(nHigh),a)
+		if (highIsClipped): 
+			hadAClippedHigh = True
+
 	betaHigh /= (2*m - 2*episilon)
 
 	if (useCache):
@@ -206,7 +251,7 @@ a_min_cache = {}
 def a_min(L,k,q,s,alpha,m):
 	# aMin = max{a : a/2 > 1-betaHigh(a)}
 	assert (0<alpha<1)
-	assert (m>=3)
+	assert (m>=2)
 	assert (s>=1)
 
 	if (useCache):
@@ -259,7 +304,7 @@ a_max_cache = {}
 def a_max(L,k,q,s,alpha,m):
 	# aMax = min{a : a/2 > betaLow(a)}
 	assert (0<alpha<1)
-	assert (m>=3)
+	assert (m>=2)
 	assert (s>=1)
 
 	if (useCache):
