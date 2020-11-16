@@ -4,8 +4,7 @@ Support for "The statistics of k-mers from a sequence undergoing a simple
 mutation process without spurious matches," Blanca, Harris, Koslicki and
 Medvedev. 2020.
 
-### Quick start for computing a confidence interval for the sketching
-mutation model
+### Quick start for computing a confidence interval for the sketching mutation model
 
 In a python3 interactive shell:
 ```bash 
@@ -23,8 +22,7 @@ hgslicer.r1_confidence_interval(L,k,sketchSize,1-confidence,numSlices,jHat)
 # result is ≈ (0.048886,0.053160)
 ```
 
-### Quick start for computing a confidence interval for r1 from an
-observation of Nmut
+### Quick start for computing a confidence interval for r1 from an observation of Nmut
 
 In a python3 interactive shell:
 ```bash 
@@ -68,7 +66,7 @@ simulate_nucleotide_errors are not available.
 
 ### Usage Overview
 
-The package has four parts:
+The package has five parts:
 * A module to compute the theoretical confidence intervals for the sketching
 mutation model described as theorem 6 in the manuscript:
 hypergeometric_slicer.py.
@@ -78,7 +76,10 @@ kmer_mutation_formulas_v1.py.
 * Two programs to generate simulations: simulate_unit_errors.py and
 simulate_nucleotide_errors.py.
 * A program to evaluate how well the simulations conform to the theoretical
-confidence intervals: evaluate_hypergeometric_slicer.py.
+confidence intervals of theorem 6: evaluate_hypergeometric_slicer.py.
+* Earlier versions of the simulation programs, simulate_unit_errors_v1.py and
+simulate_nucleotide_errors_v1.py. These perform both simulation and
+evaluation for theorem 5. 
 
 Above we describe only the confidence interval module. The simulation and
 evaluation programs are described in the reproducibility folder.
