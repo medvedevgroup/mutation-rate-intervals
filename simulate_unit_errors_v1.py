@@ -2,7 +2,11 @@
 """
 In sequence pairs chosen from the unit interval under a mutation model, compute
 the number of affected kmers and islands.
-"""
+
+NOTE: Some of the terminology here differs from that in the final manuscript
+"The statistics of kmers from a sequence undergoing a simple mutation process
+without spurious matches," Blanca, Harris, Koslicki and Medvedev.  In
+particular, "affected" as used here corresponds to "mutated" in the manuscript."""
 
 from sys          import argv,stdin,stdout,stderr,exit
 from random       import Random,seed as random_seed,random as unit_random

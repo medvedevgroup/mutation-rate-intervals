@@ -12,7 +12,12 @@ q:  1-(1-r1)^k, the probability that a kmer is 'affected'. A kmer is affected
     if it contains a least one substitution.
 
 For info on the brentq solver, which is used herein, see
-  https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html"""
+  https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html
+
+NOTE: Some of the terminology here differs from that in the final manuscript
+"The statistics of kmers from a sequence undergoing a simple mutation process
+without spurious matches," Blanca, Harris, Koslicki and Medvedev.  In
+particular, "affected" as used here corresponds to "mutated" in the manuscript."""
 
 from sys            import stderr,exit
 from math           import sqrt

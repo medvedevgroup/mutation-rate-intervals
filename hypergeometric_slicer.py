@@ -47,6 +47,7 @@ zeta_cache = {}
 def zeta(L,s,Nmutated,a):
 	# zeta(n,a)=Pr[Z>=a|N=Nmutated]
 	# i.e. the tail of a hypergeometric distribution
+	# in the manuscript, zeta is F
 	#
 	# see
 	#   https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.hypergeom.html#scipy.stats.hypergeom
@@ -177,6 +178,7 @@ def precompute_n_high_low(L,k,q,m):
 
 beta_low_cache = {}
 def beta_low(L,k,q,s,m,a):
+	# in the manuscript, beta is B
 	assert (m>=2)
 	if (useCache):
 		cacheKey = (L,k,q,s,m,a)
@@ -213,6 +215,7 @@ def beta_low(L,k,q,s,m,a):
 
 beta_high_cache = {}
 def beta_high(L,k,q,s,m,a):
+	# in the manuscript, beta is B
 	assert (m>=2)
 	if (useCache):
 		cacheKey = (L,k,q,s,m,a)
