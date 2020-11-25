@@ -7,10 +7,10 @@ Medvedev. 2020.
 ### Quick start for computing a confidence interval for the sketching mutation model
 
 ```bash 
-r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
+$ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
 # (may take about a minute)
 L       k  s    alpha jHat     r1Low    r1High
-4500000 21 5000 0.050 0.150000 0.059424 0.064678
+4500000 21 5000 0.050 0.200000 0.048886 0.053160
 ```
 
 
