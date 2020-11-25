@@ -46,7 +46,7 @@ simulate_nucleotide_errors are not available.
 ### Usage Overview
 
 The package has six parts:
-* Two front-send modules to compute theoretical confidence intervals:
+* Two command-line programs to compute theoretical confidence intervals:
 r1-from-minhash-jaccard.py and r1-from-nmut.py.
 * A module to compute the theoretical confidence intervals for the sketching
 mutation model described as theorem 6 in the manuscript:
@@ -62,6 +62,6 @@ confidence intervals of theorem 6: evaluate_hypergeometric_slicer.py.
 simulate_nucleotide_errors_v1.py. These perform both simulation and
 evaluation for theorem 5. 
 
-Above we describe only the confidence interval modules. The simulation and
-evaluation programs are described in the reproducibility folder.
+Above we describe only the confidence interval command-line programs. The
+simulation and evaluation programs are described in the reproducibility folder.
 
