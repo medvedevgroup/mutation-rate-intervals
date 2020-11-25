@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 """
 Induce errors in a fasta sequence, under a mutation model, and compute the
-number of affected kmers and related stats.
+number of mutated kmers and related stats."""
 
-NOTE: Some of the terminology here differs from that in the final manuscript
-"The statistics of kmers from a sequence undergoing a simple mutation process
-without spurious matches," Blanca, Harris, Koslicki and Medvedev.  In
-particular, "affected" as used here corresponds to "mutated" in the manuscript."""
-
-from sys          import argv,stdin,stdout,stderr,exit
-from random       import Random,seed as random_seed, \
-                         random as unit_random, \
-                         choice as random_choice, \
-                         sample as random_sample
-from math         import sqrt,floor,ceil
-from gzip         import open as gzip_open
+from sys    import argv,stdin,stdout,stderr,exit
+from random import Random,seed as random_seed, \
+                   random as unit_random, \
+                   choice as random_choice, \
+                   sample as random_sample
+from math   import sqrt,floor,ceil
+from gzip   import open as gzip_open
 from kmer_mutation_formulas_v1 \
-                  import p_affected,exp_n_affected,var_n_affected,estimate_r1_from_n_affected, \
-                         confidence_interval_r1_from_n_affected,in_confidence_interval_q_from_n_affected
+            import p_mutated,exp_n_mutated,var_n_mutated,estimate_r1_from_n_mutated, \
+                   confidence_interval_r1_from_n_mutated,in_confidence_interval_q_from_n_mutated
 
 
 def usage(s=None):
@@ -44,7 +39,7 @@ usage: cat fasta | simulate_nucleotide_errors [options]
                             functions
                             (by default inverse functions are used)
   --nosort                  don't sort output
-                            (by default output is sorted by nAffected)
+                            (by default output is sorted by nMutated)
   --stats=<filename>        write stats to a file
                             (by default stats are written to stderr)
   --mutated=<filename>      file to write the mutated sequences to
@@ -54,7 +49,7 @@ usage: cat fasta | simulate_nucleotide_errors [options]
                             tested
 
 Repeatedly apply the specified mutation model to a single input sequence and
-report the distribution of the number of affected kmers as well as other
+report the distribution of the number of mutated kmers as well as other
 related stats."""
 
 	if (s == None): exit (message)
@@ -73,7 +68,7 @@ def main():
 	sequenceType    = "linear"
 	confidence      = 0.99
 	ciUseInverse    = True
-	sortBy          = "nAffected"
+	sortBy          = "nMutated"
 	statsFilename   = None
 	mutatedFilename = None
 	mutateOnly      = False
@@ -83,7 +78,7 @@ def main():
 
 	statsOfInterest = ["name",
 	                   "r1","k","L","confidence","trials","q",
-		               "Mean[|A|].obs","Mean[|B|].obs","Mean[|A^B|].obs","Mean[|AuB|].obs","Mean[nAff.A,B].obs","Mean[L.A,B].obs",
+		               "Mean[|A|].obs","Mean[|B|].obs","Mean[|A^B|].obs","Mean[|AuB|].obs","Mean[nMut.A,B].obs","Mean[L.A,B].obs",
 		               "Mean[r1est.A,B].obs","inCI(r1est.A,B).obs"]
 
 	for arg in argv[1:]:
@@ -182,22 +177,22 @@ def main():
 		kmerSequenceLength = ntSequenceLength - (kmerSize-1)
 		mutationModel = PoissonModel \
 		                  (seq,kmerSize,pSubstitution,
-		                   count_affected_kmers_linear)
+		                   count_mutated_kmers_linear)
 	elif (noiseKind == "bernoulli") and (sequenceType == "linear"):
 		kmerSequenceLength = ntSequenceLength - (kmerSize-1)
 		mutationModel = BernoulliModel \
 		                  (seq,kmerSize,pSubstitution,
-		                   count_affected_kmers_linear)
+		                   count_mutated_kmers_linear)
 	elif (noiseKind == "poisson") and (sequenceType == "circular"):
 		kmerSequenceLength = ntSequenceLength
 		mutationModel = PoissonModel \
 		                  (seq,kmerSize,pSubstitution,
-		                   count_affected_kmers_circular)
+		                   count_mutated_kmers_circular)
 	elif (noiseKind == "bernoulli") and (sequenceType == "circular"):
 		kmerSequenceLength = ntSequenceLength
 		mutationModel = BernoulliModel \
 		                  (seq,kmerSize,pSubstitution,
-		                   count_affected_kmers_circular)
+		                   count_mutated_kmers_circular)
 	else:
 		assert (False), "internal error"
 
@@ -206,13 +201,13 @@ def main():
 	alpha = 1 - confidence
 
 	nErrorsObserved               = []
-	nAffectedObserved             = []
-	r1EstNAffectedObserved        = []
+	nMutatedObserved              = []
+	r1EstNMutatedObserved         = []
 	nDistinctAObserved            = []
 	nDistinctBObserved            = []
 	nDistinctIntersectionObserved = []
 	nDistinctUnionObserved        = []
-	nAffectedABObserved           = []
+	nMutatedABObserved            = []
 	kmerSequenceLengthABObserved  = []
 	r1EstABObserved               = []
 	inConfR1EstABObserved         = []
@@ -227,12 +222,12 @@ def main():
 		mutatedSeq = mutationModel.generate()
 		if (mutatedF != None):
 			write_fasta(mutatedF,seqName+"_mutation_%d)"%(1+seqNum),mutatedSeq)
-		(nErrors,nAffected) = mutationModel.count()
-		nErrorsObserved   += [nErrors]
-		nAffectedObserved += [nAffected]
+		(nErrors,nMutated) = mutationModel.count()
+		nErrorsObserved  += [nErrors]
+		nMutatedObserved += [nMutated]
 
-		r1EstNAffected = estimate_r1_from_n_affected(kmerSequenceLength,kmerSize,nAffected)
-		r1EstNAffectedObserved += [r1EstNAffected]
+		r1EstNMutated = estimate_r1_from_n_mutated(kmerSequenceLength,kmerSize,nMutated)
+		r1EstNMutatedObserved += [r1EstNMutated]
 
 		distinctKmersB = kmer_set(mutatedSeq,kmerSize)
 		numDistinctKmersB = len(distinctKmersB)
@@ -244,18 +239,18 @@ def main():
 		nDistinctUnionObserved        += [nDistinctKmersUnion]
 
 		kmerSequenceLengthAB = (numDistinctKmersA+numDistinctKmersB)/2.0
-		nAffectedAB          = kmerSequenceLengthAB - nDistinctKmersIntersection
-		r1EstAB = estimate_r1_from_n_affected(kmerSequenceLengthAB,kmerSize,nAffectedAB)
-		nAffectedABObserved          += [nAffectedAB]
+		nMutatedAB          = kmerSequenceLengthAB - nDistinctKmersIntersection
+		r1EstAB = estimate_r1_from_n_mutated(kmerSequenceLengthAB,kmerSize,nMutatedAB)
+		nMutatedABObserved           += [nMutatedAB]
 		kmerSequenceLengthABObserved += [kmerSequenceLengthAB]
 		r1EstABObserved              += [r1EstAB]
-		inConfR1EstAB = in_confidence_interval_q_from_n_affected(kmerSequenceLengthAB,kmerSize,pSubstitution,alpha,
-		                                                         nAffectedAB,useInverse=ciUseInverse)
+		inConfR1EstAB = in_confidence_interval_q_from_n_mutated(kmerSequenceLengthAB,kmerSize,pSubstitution,alpha,
+		                                                        nMutatedAB,useInverse=ciUseInverse)
 		inConfR1EstABObserved += [inConfR1EstAB]
 
 	# report per-trial results
 
-	if (sortBy == "nAffected"):
+	if (sortBy == "nMutated"):
 		order = [(nDistinctIntersectionObserved[ix],ix) for ix in range(numSequences)]
 		order.sort()
 		order.reverse()
@@ -263,7 +258,7 @@ def main():
 	else: # if (sortBy == None):
 		order = list(range(numSequences))
 
-	header = ["L","K","r","trial","nErr","nAff","r1est.nAff","|A|","|B|","|A^B|","|AuB|","nAff.A,B","L.A,B","r1est.A,B","inCI(r1est.A,B)"]
+	header = ["L","K","r","trial","nErr","nMut","r1est.nMut","|A|","|B|","|A^B|","|AuB|","nMut.A,B","L.A,B","r1est.A,B","inCI(r1est.A,B)"]
 	print("#%s" % "\t".join(header))
 
 	for ix in range(numSequences):
@@ -273,13 +268,13 @@ def main():
 		        pSubstitution,                            # r
 		        1+order[ix],                              # trial
 		        nErrorsObserved[order[ix]],               # nErr
-		        nAffectedObserved[order[ix]],             # nAff
-		        r1EstNAffectedObserved[order[ix]],        # r1est.nAff
+		        nMutatedObserved[order[ix]],              # nMut
+		        r1EstNMutatedObserved[order[ix]],         # r1est.nMut
 		        nDistinctAObserved[order[ix]],            # |A|
 		        nDistinctBObserved[order[ix]],            # |B|
 		        nDistinctIntersectionObserved[order[ix]], # |A^B|
 		        nDistinctUnionObserved[order[ix]],        # |AuB|
-		        nAffectedABObserved[order[ix]],           # nAff.A,B
+		        nMutatedABObserved[order[ix]],            # nMut.A,B
 		        kmerSequenceLengthABObserved[order[ix]],  # L.A,B
 		        r1EstABObserved[order[ix]],               # r1est.A,B
 		        inConfR1EstABObserved[order[ix]])         # inCI(r1est.A,B)"]
@@ -293,27 +288,26 @@ def main():
 
 	# compute stats
 
-	q = p_affected(kmerSize,pSubstitution)
+	q = p_mutated(kmerSize,pSubstitution)
 
-	nAffectedMean        = sample_mean(nAffectedObserved)
-	nAffectedStDev       = sqrt(sample_variance(nAffectedObserved))
-	predNAffectedMean    = exp_n_affected(kmerSequenceLength,kmerSize,pSubstitution)
-	predNAffectedStDev   = sqrt(var_n_affected(kmerSequenceLength,kmerSize,pSubstitution))
-	rmseNAffectedStDev   = abs(nAffectedStDev-predNAffectedStDev)
-	rmseR1EstNAffected   = sqrt(mean_squared_error(r1EstNAffectedObserved,pSubstitution))
+	nMutatedMean        = sample_mean(nMutatedObserved)
+	nMutatedStDev       = sqrt(sample_variance(nMutatedObserved))
+	predNMutatedMean    = exp_n_mutated(kmerSequenceLength,kmerSize,pSubstitution)
+	predNMutatedStDev   = sqrt(var_n_mutated(kmerSequenceLength,kmerSize,pSubstitution))
+	rmseNMutatedStDev   = abs(nMutatedStDev-predNMutatedStDev)
+	rmseR1EstNMutated   = sqrt(mean_squared_error(r1EstNMutatedObserved,pSubstitution))
 
-	(predR1EstNAffectedLow,predR1EstNAffectedHigh) \
-	                     = confidence_interval_r1_from_n_affected(kmerSequenceLength,kmerSize,pSubstitution,alpha)
-	inConfR1EstNAffected \
-	                     = in_confidence_interval_q_from_n_affected(kmerSequenceLength,kmerSize,pSubstitution,alpha,
-	                                                                nAffectedObserved,useInverse=ciUseInverse)
+	(predR1EstNMutatedLow,predR1EstNMutatedHigh) \
+	                    = confidence_interval_r1_from_n_mutated(kmerSequenceLength,kmerSize,pSubstitution,alpha)
+	inConfR1EstNMutated = in_confidence_interval_q_from_n_mutated(kmerSequenceLength,kmerSize,pSubstitution,alpha,
+	                                                              nMutatedObserved,useInverse=ciUseInverse)
 
 	nDistinctAMean       = sample_mean(nDistinctAObserved)
 	nDistinctBMean       = sample_mean(nDistinctBObserved)
 	nDistinctIntersectionMean \
 	                     = sample_mean(nDistinctIntersectionObserved)
 	nDistinctUnionMean   = sample_mean(nDistinctUnionObserved)
-	nAffectedABMean      = sample_mean(nAffectedABObserved)
+	nMutatedABMean       = sample_mean(nMutatedABObserved)
 	kmerSequenceLengthABMean \
 	                     = sample_mean(kmerSequenceLengthABObserved)
 	r1EstABMean          = sample_mean(r1EstABObserved)
@@ -328,20 +322,20 @@ def main():
 	statToText["confidence"]                    = "%0.3f" % confidence
 	statToText["trials"]                        = "%d"    % numSequences
 	statToText["q"]                             = "%0.9f" % q
-	statToText["E[nAff].theory"]                = "%0.9f" % predNAffectedMean
-	statToText["StDev[nAff].theory"]            = "%0.9f" % predNAffectedStDev
-	statToText["CIlow(r1est.nAff).theory"]      = "%0.9f" % predR1EstNAffectedLow
-	statToText["CIhigh(r1est.nAff).theory"]     = "%0.9f" % predR1EstNAffectedHigh
-	statToText["inCI(r1est.nAff).obs"]          = "%0.9f" % (float(inConfR1EstNAffected) / numSequences)
-	statToText["Mean[nAff].obs"]                = "%0.9f" % nAffectedMean
-	statToText["StDev[nAff].obs"]               = "%0.9f" % nAffectedStDev
-	statToText["RMSE(StDev[nAff])"]             = "%0.9f" % rmseNAffectedStDev
-	statToText["RMSE(r1est.nAff)"]              = "%0.9f" % rmseR1EstNAffected
+	statToText["E[nMut].theory"]                = "%0.9f" % predNMutatedMean
+	statToText["StDev[nMut].theory"]            = "%0.9f" % predNMutatedStDev
+	statToText["CIlow(r1est.nMut).theory"]      = "%0.9f" % predR1EstNMutatedLow
+	statToText["CIhigh(r1est.nMut).theory"]     = "%0.9f" % predR1EstNMutatedHigh
+	statToText["inCI(r1est.nMut).obs"]          = "%0.9f" % (float(inConfR1EstNMutated) / numSequences)
+	statToText["Mean[nMut].obs"]                = "%0.9f" % nMutatedMean
+	statToText["StDev[nMut].obs"]               = "%0.9f" % nMutatedStDev
+	statToText["RMSE(StDev[nMut])"]             = "%0.9f" % rmseNMutatedStDev
+	statToText["RMSE(r1est.nMut)"]              = "%0.9f" % rmseR1EstNMutated
 	statToText["Mean[|A|].obs"]                 = "%d"    % nDistinctAMean
 	statToText["Mean[|B|].obs"]                 = "%d"    % nDistinctBMean
 	statToText["Mean[|A^B|].obs"]               = "%d"    % nDistinctIntersectionMean
 	statToText["Mean[|AuB|].obs"]               = "%d"    % nDistinctUnionMean
-	statToText["Mean[nAff.A,B].obs"]            = "%d"    % nAffectedABMean
+	statToText["Mean[nMut.A,B].obs"]            = "%d"    % nMutatedABMean
 	statToText["Mean[L.A,B].obs"]               = "%d"    % kmerSequenceLengthABMean
 	statToText["Mean[r1est.A,B].obs"]           = "%0.9f" % r1EstABMean
 	statToText["inCI(r1est.A,B).obs"]           = "%0.9f" % (float(sum(inConfR1EstABObserved)) / numSequences)
@@ -364,24 +358,24 @@ def main():
 
 # PoissonModel--
 #	Generate a sequence of poisson-type errors, and report the number of
-#	errors and affected kmers.
+#	errors and mutated kmers.
 
 ntToMutations = {"A":"CGT","C":"AGT","G":"ACT","T":"ACG",
 		         "a":"cgt","c":"agt","g":"act","t":"acg"}
 
 class PoissonModel(object):
 
-	def __init__(self,seq,kmerSize,pSubstitution,affectedKmerCounter):
-		self.seq                 = seq
-		self.mutatedSeq          = None
-		self.kmerSize            = kmerSize
-		self.pSubstitution       = pSubstitution
-		self.affectedKmerCounter = affectedKmerCounter
+	def __init__(self,seq,kmerSize,pSubstitution,mutatedKmerCounter):
+		self.seq                = seq
+		self.mutatedSeq         = None
+		self.kmerSize           = kmerSize
+		self.pSubstitution      = pSubstitution
+		self.mutatedKmerCounter = mutatedKmerCounter
 
 	def count(self,regenerate=False):
 		if (regenerate): self.generate()
 		return (sum([(self.seq[ix]!=self.mutatedSeq[ix]) for ix in range(len(self.seq))]),
-		        self.affectedKmerCounter(self.seq,self.mutatedSeq,self.kmerSize))
+		        self.mutatedKmerCounter(self.seq,self.mutatedSeq,self.kmerSize))
 
 	def generate(self):
 		errorSeq = list(map(lambda _:1 if (unit_random()<self.pSubstitution) else 0,range(len(self.seq))))
@@ -407,16 +401,16 @@ class PoissonModel(object):
 
 # BernoulliModel--
 #	Generate a sequence of bernoulli-type errors, and report the number of
-#	errors and affected kmers.
+#	errors and mutated kmers.
 
 class BernoulliModel(object):
 
-	def __init__(self,seq,kmerSize,pSubstitution,affectedKmerCounter):
-		self.seq                 = seq
-		self.mutatedSeq          = None
-		self.kmerSize            = kmerSize
-		self.pSubstitution       = pSubstitution
-		self.affectedKmerCounter = affectedKmerCounter
+	def __init__(self,seq,kmerSize,pSubstitution,mutatedKmerCounter):
+		self.seq                = seq
+		self.mutatedSeq         = None
+		self.kmerSize           = kmerSize
+		self.pSubstitution      = pSubstitution
+		self.mutatedKmerCounter = mutatedKmerCounter
 
 	def generate(self):
 		# $$$ this needs to consider that some positions don't have valid ACGT,
@@ -431,38 +425,38 @@ class BernoulliModel(object):
 		return self.mutatedSeq
 
 
-# count_affected_kmers_linear--
-#	Given a sequence pair, report the number of errors and affected kmers,
+# count_mutated_kmers_linear--
+#	Given a sequence pair, report the number of errors and mutated kmers,
 #	treating the sequence as linear.
 
 # $$$ needs to exclude invalid kmers
-def count_affected_kmers_linear(seq,mutatedSeq,kmerSize):
+def count_mutated_kmers_linear(seq,mutatedSeq,kmerSize):
 	assert (len(seq) == len(mutatedSeq))
 	assert (len(seq) >= kmerSize)
 	nKmers = len(seq) - (kmerSize-1)
-	nAffected = 0
+	nMutated = 0
 	for pos in range(nKmers):
 		if (seq[pos:pos+kmerSize] != mutatedSeq[pos:pos+kmerSize]):
-			nAffected += 1       # pos is 'affected'
-	return nAffected
+			nMutated += 1       # pos is mutated
+	return nMutated
 
 
-# count_affected_kmers_circular--
-#	Given a sequence pair, report the number of errors and affected kmers,
+# count_mutated_kmers_circular--
+#	Given a sequence pair, report the number of errors and mutated kmers,
 #	treating the sequence as circular.
 
 # $$$ needs to exclude invalid kmers
-def count_affected_kmers_circular(seq,mutatedSeq,kmerSize):
+def count_mutated_kmers_circular(seq,mutatedSeq,kmerSize):
 	assert (len(seq) == len(mutatedSeq))
 	assert (len(seq) >= kmerSize)
 	sExtended = seq + seq[:kmerSize-1]
 	mExtended = mutatedSeq + mutatedSeq[:kmerSize-1]
 	nKmers = len(seq)
-	nAffected = 0
+	nMutated = 0
 	for pos in range(nKmers):
 		if (sExtended[pos:pos+kmerSize] != mExtended[pos:pos+kmerSize]):
-			nAffected += 1       # pos is 'affected'
-	return nAffected
+			nMutated += 1       # pos is mutated
+	return nMutated
 
 
 # mean, variance, mean_squared_error--

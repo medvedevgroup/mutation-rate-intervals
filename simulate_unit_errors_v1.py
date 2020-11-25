@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 """
 In sequence pairs chosen from the unit interval under a mutation model, compute
-the number of affected kmers and islands.
-
-NOTE: Some of the terminology here differs from that in the final manuscript
-"The statistics of kmers from a sequence undergoing a simple mutation process
-without spurious matches," Blanca, Harris, Koslicki and Medvedev.  In
-particular, "affected" as used here corresponds to "mutated" in the manuscript."""
+the number of mutated kmers and islands."""
 
 from sys          import argv,stdin,stdout,stderr,exit
 from random       import Random,seed as random_seed,random as unit_random
@@ -15,8 +10,8 @@ from gzip         import open as gzip_open
 from numpy.random import RandomState
 from scipy.stats  import hypergeom
 from kmer_mutation_formulas_v1 \
-                  import p_affected,exp_n_affected,var_n_affected,estimate_r1_from_n_affected, \
-                         confidence_interval_r1_from_n_affected,in_confidence_interval_q_from_n_affected, \
+                  import p_mutated,exp_n_mutated,var_n_mutated,estimate_r1_from_n_mutated, \
+                         confidence_interval_r1_from_n_mutated,in_confidence_interval_q_from_n_mutated, \
                          exp_n_island,var_n_island,estimate_r1_from_n_island,impossible_n_island, \
                          confidence_interval_r1_from_n_island,in_confidence_interval_q_from_n_island
 
@@ -48,7 +43,7 @@ usage: simulate_unit_errors [options]
                             functions
                             (by default inverse functions are used)
   --nosort                  don't sort output
-                            (by default output is sorted by nAffected)
+                            (by default output is sorted by nMutated)
   --stats=<filename>        write stats to a file
                             (by default stats are written to stderr)
   --seed=<string>           set random seed
@@ -56,7 +51,7 @@ usage: simulate_unit_errors [options]
                             tested
 
 Conceptually, generate pairs of sequences in the unit interval and report the
-distribution of the number of affected kmers as well as other related stats.
+distribution of the number of mutated kmers as well as other related stats.
 
 A 'sequence pair' is a random circular sequence and a mutated version of it.
 The mutated version is consistent with a model where the sequence represents
@@ -84,16 +79,16 @@ def main():
 	sequenceType       = "linear"
 	confidence         = 0.99
 	ciUseInverse       = True
-	sortBy             = "nAffected"
+	sortBy             = "nMutated"
 	statsFilename      = None
 	prngSeed           = None
 	reportProgress     = None
 	debug              = []
 
 	statsOfInterest = ["r1","k","L","confidence","trials","q",
-		               "E[nAff].theory","StDev[nAff].theory",
-		               "inCI(r1est.nAff).obs",
-		               "Mean[nAff].obs","StDev[nAff].obs","RMSE(StDev[nAff])","RMSE(r1est.nAff)",
+		               "E[nMut].theory","StDev[nMut].theory",
+		               "inCI(r1est.nMut).obs",
+		               "Mean[nMut].obs","StDev[nMut].obs","RMSE(StDev[nMut])","RMSE(r1est.nMut)",
 		               "E[nIsl].theory","StDev[nIsl].theory",
 		               "inCI(r1est.nIsl).obs",
 		               "Mean[nIsl].obs","StDev[nIsl].obs","RMSE(StDev[nIsl])","RMSE(r1est.nIsl)",
@@ -162,34 +157,34 @@ def main():
 	if (noiseKind == "poisson") and (sequenceType == "linear"):
 		mutationModel = PoissonModel \
 		                  (kmerSequenceLength+kmerSize-1,kmerSize,pSubstitution,
-		                   count_affected_kmers_linear_naive if ("naive" in debug) else count_affected_kmers_linear,
+		                   count_mutated_kmers_linear_naive if ("naive" in debug) else count_mutated_kmers_linear,
 		                   count_islands_linear)
 	elif (noiseKind == "bernoulli") and (sequenceType == "linear"):
 		mutationModel = BernoulliModel \
 		                  (kmerSequenceLength+kmerSize-1,kmerSize,pSubstitution,
-		                   count_affected_kmers_linear_naive if ("naive" in debug) else count_affected_kmers_linear,
+		                   count_mutated_kmers_linear_naive if ("naive" in debug) else count_mutated_kmers_linear,
 		                   count_islands_linear)
 	elif (noiseKind == "poisson") and (sequenceType == "circular"):
 		mutationModel = PoissonModel \
 		                  (kmerSequenceLength,kmerSize,pSubstitution,
-		                   count_affected_kmers_circular_naive if ("naive" in debug) else count_affected_kmers_circular,
+		                   count_mutated_kmers_circular_naive if ("naive" in debug) else count_mutated_kmers_circular,
 		                   count_islands_circular)
 	elif (noiseKind == "bernoulli") and (sequenceType == "circular"):
 		mutationModel = BernoulliModel \
 		                  (kmerSequenceLength,kmerSize,pSubstitution,
-		                   count_affected_kmers_circular_naive if ("naive" in debug) else count_affected_kmers_circular,
+		                   count_mutated_kmers_circular_naive if ("naive" in debug) else count_mutated_kmers_circular,
 		                   count_islands_circular)
 	else:
 		assert (False), "internal error"
 
 	# generate sequences and collect stats
 
-	nErrorsObserved        = []
-	nAffectedObserved      = []
-	nIslandObserved        = []
-	r1EstNAffectedObserved = []
-	r1EstNIslandObserved   = []
-	numImpossibleNislands  = 0   # counts when nIsland can't be achieved with any r1
+	nErrorsObserved       = []
+	nMutatedObserved      = []
+	nIslandObserved       = []
+	r1EstNMutatedObserved = []
+	r1EstNIslandObserved  = []
+	numImpossibleNislands = 0   # counts when nIsland can't be achieved with any r1
 
 	for seqNum in range(numSequences):
 		if (reportProgress != None):
@@ -199,17 +194,17 @@ def main():
 		# generate a (conceptual) sequence pair and collect stats
 
 		mutationModel.generate()
-		(nErrors,nAffected,nIsland) = mutationModel.count()
-		nErrorsObserved   += [nErrors]
-		nAffectedObserved += [nAffected]
-		nIslandObserved   += [nIsland]
+		(nErrors,nMutated,nIsland) = mutationModel.count()
+		nErrorsObserved  += [nErrors]
+		nMutatedObserved += [nMutated]
+		nIslandObserved  += [nIsland]
 
-		r1EstNAffected = estimate_r1_from_n_affected(kmerSequenceLength,kmerSize,nAffected)
-		r1EstNAffectedObserved += [r1EstNAffected]
+		r1EstNMutated = estimate_r1_from_n_mutated(kmerSequenceLength,kmerSize,nMutated)
+		r1EstNMutatedObserved += [r1EstNMutated]
 
 		# note: when r1 is estimated from nIsland, there can be more than one
 		# solution; we take the solution that is closest to r1 estimated from
-		# nAffected
+		# nMutated
 
 		r1EstNIslandList = estimate_r1_from_n_island(kmerSequenceLength,kmerSize,nIsland)
 		if (len(r1EstNIslandList) == 0):
@@ -219,7 +214,7 @@ def main():
 		else:
 			r1EstNIsland = None
 			for r1Est in r1EstNIslandList:
-				diff = abs(r1Est-r1EstNAffected)
+				diff = abs(r1Est-r1EstNMutated)
 				if (r1EstNIsland == None) or (diff < bestDiff):
 					r1EstNIsland = r1Est
 					bestDiff = diff
@@ -230,14 +225,14 @@ def main():
 
 	# report per-trial results
 
-	if (sortBy == "nAffected"):
-		order = [(nAffectedObserved[ix],ix) for ix in range(numSequences)]
+	if (sortBy == "nMutated"):
+		order = [(nMutatedObserved[ix],ix) for ix in range(numSequences)]
 		order.sort()
 		order = [ix for (_,ix) in order]
 	else: # if (sortBy == None):
 		order = list(range(numSequences))
 
-	header = ["L","K","r","trial","nErr","nAff","nIsl","r1est.nAff","r1.est.nIsl"]
+	header = ["L","K","r","trial","nErr","nMut","nIsl","r1est.nMut","r1.est.nIsl"]
 	print("#%s" % "\t".join(header))
 
 	for ix in range(numSequences):
@@ -247,42 +242,42 @@ def main():
 		        pSubstitution,
 		        1+order[ix],
 		        nErrorsObserved[order[ix]],
-		        nAffectedObserved[order[ix]],
+		        nMutatedObserved[order[ix]],
 		        nIslandObserved[order[ix]],
-		        r1EstNAffectedObserved[order[ix]],
+		        r1EstNMutatedObserved[order[ix]],
 		        r1EstNIslandObserved[order[ix]])
 		print(line)
 
 	# compute stats
 
 	alpha = 1 - confidence
-	q = p_affected(kmerSize,pSubstitution)
+	q = p_mutated(kmerSize,pSubstitution)
 
-	nAffectedMean      = sample_mean(nAffectedObserved)
-	nAffectedStDev     = sqrt(sample_variance(nAffectedObserved))
-	predNAffectedMean  = exp_n_affected(kmerSequenceLength,kmerSize,pSubstitution)
-	predNAffectedStDev = sqrt(var_n_affected(kmerSequenceLength,kmerSize,pSubstitution))
-	rmseNAffectedStDev = abs(nAffectedStDev-predNAffectedStDev)
+	nMutatedMean      = sample_mean(nMutatedObserved)
+	nMutatedStDev     = sqrt(sample_variance(nMutatedObserved))
+	predNMutatedMean  = exp_n_mutated(kmerSequenceLength,kmerSize,pSubstitution)
+	predNMutatedStDev = sqrt(var_n_mutated(kmerSequenceLength,kmerSize,pSubstitution))
+	rmseNMutatedStDev = abs(nMutatedStDev-predNMutatedStDev)
 
-	nIslandMean        = sample_mean(nIslandObserved)
-	nIslandStDev       = sqrt(sample_variance(nIslandObserved))
-	predNIslandMean    = exp_n_island(kmerSequenceLength,kmerSize,pSubstitution)
-	predNIslandStDev   = sqrt(var_n_island(kmerSequenceLength,kmerSize,pSubstitution))
-	rmseNIslandStDev   = abs(nIslandStDev-predNIslandStDev)
+	nIslandMean       = sample_mean(nIslandObserved)
+	nIslandStDev      = sqrt(sample_variance(nIslandObserved))
+	predNIslandMean   = exp_n_island(kmerSequenceLength,kmerSize,pSubstitution)
+	predNIslandStDev  = sqrt(var_n_island(kmerSequenceLength,kmerSize,pSubstitution))
+	rmseNIslandStDev  = abs(nIslandStDev-predNIslandStDev)
 
-	rmseR1EstNAffected = sqrt(mean_squared_error(r1EstNAffectedObserved,pSubstitution))
-	rmseR1EstNIsland   = sqrt(mean_squared_error(r1EstNIslandObserved,pSubstitution))
+	rmseR1EstNMutated = sqrt(mean_squared_error(r1EstNMutatedObserved,pSubstitution))
+	rmseR1EstNIsland  = sqrt(mean_squared_error(r1EstNIslandObserved,pSubstitution))
 
-	(predR1EstNAffectedLow,predR1EstNAffectedHigh) \
-	                   = confidence_interval_r1_from_n_affected(kmerSequenceLength,kmerSize,pSubstitution,alpha)
-	inConfR1EstNAffected \
-	                   = in_confidence_interval_q_from_n_affected(kmerSequenceLength,kmerSize,pSubstitution,alpha,
-	                                                              nAffectedObserved,useInverse=ciUseInverse)
+	(predR1EstNMutatedLow,predR1EstNMutatedHigh) \
+	                  = confidence_interval_r1_from_n_mutated(kmerSequenceLength,kmerSize,pSubstitution,alpha)
+	inConfR1EstNMutated \
+	                  = in_confidence_interval_q_from_n_mutated(kmerSequenceLength,kmerSize,pSubstitution,alpha,
+	                                                            nMutatedObserved,useInverse=ciUseInverse)
 
 	(predR1EstNIslandLow,predR1EstNIslandHigh) \
 	                   = confidence_interval_r1_from_n_island(kmerSequenceLength,kmerSize,pSubstitution,alpha)
 	inConfR1EstNIsland = in_confidence_interval_q_from_n_island(kmerSequenceLength,kmerSize,pSubstitution,alpha,
-	                                                            nIslandObserved,nAffectedObserved,useInverse=ciUseInverse)
+	                                                            nIslandObserved,nMutatedObserved,useInverse=ciUseInverse)
 
 	# report stats
 
@@ -293,15 +288,15 @@ def main():
 	statToText["confidence"]                = "%0.3f" % confidence
 	statToText["trials"]                    = "%d"    % numSequences
 	statToText["q"]                         = "%0.9f" % q
-	statToText["E[nAff].theory"]            = "%0.9f" % predNAffectedMean
-	statToText["StDev[nAff].theory"]        = "%0.9f" % predNAffectedStDev
-	statToText["CIlow(r1est.nAff).theory"]  = "%0.9f" % predR1EstNAffectedLow
-	statToText["CIhigh(r1est.nAff).theory"] = "%0.9f" % predR1EstNAffectedHigh
-	statToText["inCI(r1est.nAff).obs"]      = "%0.9f" % (float(inConfR1EstNAffected) / numSequences)
-	statToText["Mean[nAff].obs"]            = "%0.9f" % nAffectedMean
-	statToText["StDev[nAff].obs"]           = "%0.9f" % nAffectedStDev
-	statToText["RMSE(StDev[nAff])"]         = "%0.9f" % rmseNAffectedStDev
-	statToText["RMSE(r1est.nAff)"]          = "%0.9f" % rmseR1EstNAffected
+	statToText["E[nMut].theory"]            = "%0.9f" % predNMutatedMean
+	statToText["StDev[nMut].theory"]        = "%0.9f" % predNMutatedStDev
+	statToText["CIlow(r1est.nMut).theory"]  = "%0.9f" % predR1EstNMutatedLow
+	statToText["CIhigh(r1est.nMut).theory"] = "%0.9f" % predR1EstNMutatedHigh
+	statToText["inCI(r1est.nMut).obs"]      = "%0.9f" % (float(inConfR1EstNMutated) / numSequences)
+	statToText["Mean[nMut].obs"]            = "%0.9f" % nMutatedMean
+	statToText["StDev[nMut].obs"]           = "%0.9f" % nMutatedStDev
+	statToText["RMSE(StDev[nMut])"]         = "%0.9f" % rmseNMutatedStDev
+	statToText["RMSE(r1est.nMut)"]          = "%0.9f" % rmseR1EstNMutated
 	statToText["E[nIsl].theory"]            = "%0.9f" % predNIslandMean
 	statToText["StDev[nIsl].theory"]        = "%0.9f" % predNIslandStDev
 	statToText["CIlow(r1est.nIsl).theory"]  = "%0.9f" % predR1EstNIslandLow
@@ -331,21 +326,21 @@ def main():
 
 # PoissonModel--
 #	Generate a sequence of poisson-type errors, and report the number of
-#	errors, affected kmers, and islands.
+#	errors, mutated kmers, and islands.
 
 class PoissonModel(object):
 
-	def __init__(self,ntSequenceLength,kmerSize,pSubstitution,affectedKmerCounter,islandCounter):
-		self.ntSequenceLength    = ntSequenceLength
-		self.kmerSize            = kmerSize
-		self.pSubstitution       = pSubstitution
-		self.affectedKmerCounter = affectedKmerCounter
-		self.islandCounter       = islandCounter
+	def __init__(self,ntSequenceLength,kmerSize,pSubstitution,mutatedKmerCounter,islandCounter):
+		self.ntSequenceLength   = ntSequenceLength
+		self.kmerSize           = kmerSize
+		self.pSubstitution      = pSubstitution
+		self.mutatedKmerCounter = mutatedKmerCounter
+		self.islandCounter      = islandCounter
 
 	def count(self,regenerate=False):
 		if (regenerate): self.generate()
 		return (sum(self.errorSeq),
-		        self.affectedKmerCounter(self.kmerSize,self.errorSeq),
+		        self.mutatedKmerCounter(self.kmerSize,self.errorSeq),
 		        self.islandCounter(self.kmerSize,self.errorSeq))
 
 	def generate(self):
@@ -355,16 +350,16 @@ class PoissonModel(object):
 
 # BernoulliModel--
 #	Generate a sequence of bernoulli-type errors, and report the number of
-#	errors, affected kmers, and islands.
+#	errors, mutated kmers, and islands.
 
 class BernoulliModel(object):
 
-	def __init__(self,ntSequenceLength,kmerSize,pSubstitution,affectedKmerCounter,islandCounter):
-		self.ntSequenceLength    = ntSequenceLength
-		self.kmerSize            = kmerSize
-		self.pSubstitution       = pSubstitution
-		self.affectedKmerCounter = affectedKmerCounter
-		self.islandCounter       = islandCounter
+	def __init__(self,ntSequenceLength,kmerSize,pSubstitution,mutatedKmerCounter,islandCounter):
+		self.ntSequenceLength   = ntSequenceLength
+		self.kmerSize           = kmerSize
+		self.pSubstitution      = pSubstitution
+		self.mutatedKmerCounter = mutatedKmerCounter
+		self.islandCounter      = islandCounter
 
 	def generate(self):
 		self.errorSeq = []
@@ -378,74 +373,74 @@ class BernoulliModel(object):
 		return self.errorSeq
 
 
-# count_affected_kmers_linear--
-#	Given a sequence of errors, report the number of errors and affected
+# count_mutated_kmers_linear--
+#	Given a sequence of errors, report the number of errors and mutated
 #	kmers, treating the sequence as linear. The error sequence is a list of
 #	1 (error) and 0 (non-error).
 #
 #	The algorithm maintains a sum of errors over a sliding window of length K.
-#	wherever this sum is non-zero, the corresponding kmer is 'affected'.
+#	wherever this sum is non-zero, the corresponding kmer is mutated.
 
-def count_affected_kmers_linear(kmerSize,errorSeq):
-	nAffected = 0
+def count_mutated_kmers_linear(kmerSize,errorSeq):
+	nMutated = 0
 	errorsInKmer = 0
 	for pos in range(len(errorSeq)+1):
 		# invariant: errorsInKmer is sum of errorSeq pos-kmerSize through pos-1
 		if (pos >= kmerSize):
-			if (errorsInKmer > 0): nAffected += 1   # pos-kmerSize is 'affected'
+			if (errorsInKmer > 0): nMutated += 1   # pos-kmerSize is mutated
 			errorsInKmer -= errorSeq[pos-kmerSize]
 		if (pos == len(errorSeq)): break
 		errorsInKmer += errorSeq[pos]
-	if ("affected" in debug):
-		print("%s (%d)" % (" ".join(map(str,errorSeq)),nAffected),file=stderr)
-	return nAffected
+	if ("mutated" in debug):
+		print("%s (%d)" % (" ".join(map(str,errorSeq)),nMutated),file=stderr)
+	return nMutated
 
 
-def count_affected_kmers_linear_naive(kmerSize,errorSeq):
+def count_mutated_kmers_linear_naive(kmerSize,errorSeq):
 	seqLen = len(errorSeq) - (kmerSize-1)
-	nAffected = 0
+	nMutated = 0
 	for pos in range(seqLen):
 		errorsInKmer = sum(errorSeq[pos:pos+kmerSize])
-		if (errorsInKmer > 0): nAffected += 1       # pos is 'affected'
-	if ("affected" in debug):
-		print("%s (%d)" % (" ".join(map(str,errorSeq)),nAffected),file=stderr)
-	return nAffected
+		if (errorsInKmer > 0): nMutated += 1       # pos is mutated
+	if ("mutated" in debug):
+		print("%s (%d)" % (" ".join(map(str,errorSeq)),nMutated),file=stderr)
+	return nMutated
 
 
-# count_affected_kmers_circular--
-#	Given a sequence of errors, report the number of errors and affected
+# count_mutated_kmers_circular--
+#	Given a sequence of errors, report the number of errors and mutated
 #	kmers, treating the sequence as circular. The error sequence is a list of
 #	1 (error) and 0 (non-error).
 #
 #	The algorithm maintains a sum of errors over a sliding window of length K.
-#	wherever this sum is non-zero, the corresponding kmer is 'affected'.
+#	wherever this sum is non-zero, the corresponding kmer is mutated.
 
-def count_affected_kmers_circular(kmerSize,errorSeq):
+def count_mutated_kmers_circular(kmerSize,errorSeq):
 	seqLen = len(errorSeq)
-	nAffected = 0
+	nMutated = 0
 	errorsInKmer = 0
 	for pos in range(seqLen+kmerSize):
 		# invariant: errorsInKmer is sum of errorSeq pos-kmerSize through pos-1
 		if (pos >= kmerSize):
-			if (errorsInKmer > 0): nAffected += 1   # pos-kmerSize is 'affected'
+			if (errorsInKmer > 0): nMutated += 1   # pos-kmerSize is mutated
 			errorsInKmer -= errorSeq[pos-kmerSize]
 		errorsInKmer += errorSeq[pos] if (pos < seqLen) else errorSeq[pos-seqLen]
-	if ("affected" in debug):
-		print("%s (%d)" % (" ".join(map(str,errorSeq)),nAffected),file=stderr)
-	return nAffected
+	if ("mutated" in debug):
+		print("%s (%d)" % (" ".join(map(str,errorSeq)),nMutated),file=stderr)
+	return nMutated
 
 
-def count_affected_kmers_circular_naive(kmerSize,errorSeq):
+def count_mutated_kmers_circular_naive(kmerSize,errorSeq):
 	seqLen = len(errorSeq)
 	extendedSeq = errorSeq + errorSeq[:kmerSize-1]
 
-	nAffected = 0
+	nMutated = 0
 	for pos in range(seqLen):
 		errorsInKmer = sum(extendedSeq[pos:pos+kmerSize])
-		if (errorsInKmer > 0): nAffected += 1       # pos is 'affected'
-	if ("affected" in debug):
-		print("%s (%d)" % (" ".join(map(str,errorSeq)),nAffected),file=stderr)
-	return nAffected
+		if (errorsInKmer > 0): nMutated += 1       # pos is mutated
+	if ("mutated" in debug):
+		print("%s (%d)" % (" ".join(map(str,errorSeq)),nMutated),file=stderr)
+	return nMutated
 
 
 # count_islands_linear--

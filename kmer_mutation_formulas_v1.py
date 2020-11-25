@@ -7,16 +7,11 @@ k:  Kmer length.
 L:  Sequence length; specifically, the number of complete KMERS in the sequence.
     The corresponding nucleotide sequence length would be L+k-1.
 r1: Nucleotide substitution rate.
-q:  1-(1-r1)^k, the probability that a kmer is 'affected'. A kmer is affected
-    if it contains a least one substitution.
+q:  1-(1-r1)^k, the probability that a kmer is mutated, i.e. that a kmer
+    contains a least one substitution.
 
 For info on the brentq solver, which is used herein, see
-  https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html
-
-NOTE: Some of the terminology here differs from that in the final manuscript
-"The statistics of kmers from a sequence undergoing a simple mutation process
-without spurious matches," Blanca, Harris, Koslicki and Medvedev.  In
-particular, "affected" as used here corresponds to "mutated" in the manuscript."""
+  https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html"""
 
 from sys            import stderr,exit
 from math           import sqrt
@@ -30,10 +25,10 @@ except ModuleNotFoundError:
 	mpf = lambda v:float(v)
 
 #==========
-# formulas for Naffected
+# formulas for Nmutated
 #==========
 
-def p_affected(k,r1):
+def p_mutated(k,r1):
 	return r1_to_q(k,r1)
 
 def r1_to_q(k,r1):
@@ -43,7 +38,7 @@ def r1_to_q(k,r1):
 	return float(q)
 
 
-def p_affected_inverse(k,q):
+def p_mutated_inverse(k,q):
 	return q_to_r1(k,r1)
 
 def q_to_r1(k,q):
@@ -54,12 +49,12 @@ def q_to_r1(k,q):
 	return float(r1)
 
 
-def exp_n_affected(L,k,r1):
+def exp_n_mutated(L,k,r1):
 	q = r1_to_q(k,r1)
 	return L*q
 
 
-def var_n_affected(L,k,r1,q=None):
+def var_n_mutated(L,k,r1,q=None):
 	# there are computational issues in the variance formula that we solve here
 	# by the use of higher-precision arithmetic; the problem occurs when r is
 	# very small; for example, with L=10,k=2,r1=1e-6 standard precision
@@ -76,42 +71,42 @@ def var_n_affected(L,k,r1,q=None):
 	return float(varN)
 
 
-# estimate_r1_from_n_affected:
-#   q = 1-(1-r1)^k  and e[nAffected] = qL
+# estimate_r1_from_n_mutated:
+#   q = 1-(1-r1)^k  and e[nMutated] = qL
 # so
-#   qHat = nAffected/L
-#   r1Est = 1-kth_root(1-qHat) = 1-kth_root(1-nAffected/L) 
+#   qHat = nMutated/L
+#   r1Est = 1-kth_root(1-qHat) = 1-kth_root(1-nMutated/L) 
 
-def estimate_q_from_n_affected(L,nAffected):
-	return float(nAffected)/L
-
-
-def estimate_r1_from_n_affected(L,k,nAffected):
-	return 1 - (1-float(nAffected)/L)**(1.0/k)
+def estimate_q_from_n_mutated(L,nMutated):
+	return float(nMutated)/L
 
 
-def confidence_interval_r1_from_n_affected(L,k,r1,alpha):
+def estimate_r1_from_n_mutated(L,k,nMutated):
+	return 1 - (1-float(nMutated)/L)**(1.0/k)
+
+
+def confidence_interval_r1_from_n_mutated(L,k,r1,alpha):
 	z = probit(1-alpha/2)
 	q = r1_to_q(k,r1)
-	varN = var_n_affected(L,k,r1,q=q)
+	varN = var_n_mutated(L,k,r1,q=q)
 	(nLow,nHigh) = confidence_interval(L,q,varN,z)
 	r1Low  = q_to_r1(k,nLow/L)
 	r1High = q_to_r1(k,nHigh/L)
 	return (r1Low,r1High)
 
 
-def in_confidence_interval_q_from_n_affected(L,k,r1,alpha,nAffectedObserved,useInverse=True):
-	# nAffectedObserved argument can be a single value or a list
-	if (not isinstance(nAffectedObserved,list)):
-		nAffectedObserved = [nAffectedObserved]
+def in_confidence_interval_q_from_n_mutated(L,k,r1,alpha,nMutatedObserved,useInverse=True):
+	# nMutatedObserved argument can be a single value or a list
+	if (not isinstance(nMutatedObserved,list)):
+		nMutatedObserved = [nMutatedObserved]
 	z = probit(1-alpha/2)
 	q = r1_to_q(k,r1)
 
 	if (useInverse):
 		numInCI = 0
-		for nAffected in nAffectedObserved:
-			q1 = q_for_n_affected_high(L,k,nAffected,z)   # nHigh(q1) == nAff
-			q2 = q_for_n_affected_low (L,k,nAffected,z)   # nLow (q2) == nAff
+		for nMutated in nMutatedObserved:
+			q1 = q_for_n_mutated_high(L,k,nMutated,z)   # nHigh(q1) == nMut
+			q2 = q_for_n_mutated_low (L,k,nMutated,z)   # nLow (q2) == nMut
 			if (q1 < q < q2):
 				numInCI += 1
 		return numInCI
@@ -120,88 +115,88 @@ def in_confidence_interval_q_from_n_affected(L,k,r1,alpha,nAffectedObserved,useI
 		qLow  = n_low (L,k,q,z) / L
 		qHigh = n_high(L,k,q,z) / L
 		numInCI = 0
-		for nAffected in nAffectedObserved:
-			qHat = float(nAffected) / L
+		for nMutated in nMutatedObserved:
+			qHat = float(nMutated) / L
 			if (qLow < qHat < qHigh):
 				numInCI += 1
 		return numInCI
 
 
-# q_for_n_affected_high--
-#	find q s.t. nHigh(q) == nAff
+# q_for_n_mutated_high--
+#	find q s.t. nHigh(q) == nMut
 #
-# Note: nAff==0 is a special case. When q=0 the formula for variance has a zero
+# Note: nMut==0 is a special case. When q=0 the formula for variance has a zero
 # in the denominator and thus fails to compute. Hoever, the limit of that
 # formula as q goes to zero is zero (and in fact, it is easy to see that the
 # variance is truly zero when q=0). This means the formulas for nLow and nHigh,
-# e.g. L*q-z*sqrt(varN), are zero when q=0. Thus if nAff=0, 0 is the q for
-# which nHigh(q) == nAff.
+# e.g. L*q-z*sqrt(varN), are zero when q=0. Thus if nMut=0, 0 is the q for
+# which nHigh(q) == nMut.
 #
-# nAff==L is another special case. There are two solutions in this case, one
+# nMut==L is another special case. There are two solutions in this case, one
 # of which is q=1. We are interested in the other solutions
 
-def q_for_n_affected_high(L,k,nAff,z):
-	if (nAff == 0): return 0.0   # special case, see note above
-	qRight = 1 if (nAff<L) else 1-1e-5
+def q_for_n_mutated_high(L,k,nMut,z):
+	if (nMut == 0): return 0.0   # special case, see note above
+	qRight = 1 if (nMut<L) else 1-1e-5
 	qLeft = 1e-5
 	attemptsLeft = 10
-	while (n_high(L,k,qLeft,z) >= nAff):
+	while (n_high(L,k,qLeft,z) >= nMut):
 		qLeft /= 2
 		attemptsLeft -= 1
 		if (attemptsLeft < 0): break
-	if (n_high(L,k,qLeft,z) >= nAff):
+	if (n_high(L,k,qLeft,z) >= nMut):
 		# this is just laziness, it really means our assumptions about the
 		# solution space are wrong
-		print("q_for_n_affected_high(L=%s,k=%d,nAff=%s)" % (L,k,nAff),file=stderr)
+		print("q_for_n_mutated_high(L=%s,k=%d,nMut=%s)" % (L,k,nMut),file=stderr)
 		print("n_high(...,qLeft=%s)=%s" % (qLeft,n_low(L,k,qLeft,z)),file=stderr)
 		raise ValueError
 
 	# at this point,
-	#	n_high(L,k,qLeft,z)  - nAff < 0
-	#	n_high(L,k,qRight,z) - nAff > 0
+	#	n_high(L,k,qLeft,z)  - nMut < 0
+	#	n_high(L,k,qRight,z) - nMut > 0
 	# so we can use the Brent's method to find the solution in the bracketed
 	# interval
-	func = lambda q: n_high(L,k,q,z)-nAff
+	func = lambda q: n_high(L,k,q,z)-nMut
 	return brentq(func,qLeft,qRight)
 
 
-# q_for_n_affected_low--
-#	find q s.t. nLow(q) == nAff
+# q_for_n_mutated_low--
+#	find q s.t. nLow(q) == nMut
 
-def q_for_n_affected_low(L,k,nAff,z):
+def q_for_n_mutated_low(L,k,nMut,z):
 	qRight = 1
 	qLeft = 1e-5
 	attemptsLeft = 10
-	while (n_low(L,k,qLeft,z) >= nAff):
+	while (n_low(L,k,qLeft,z) >= nMut):
 		qLeft /= 2
 		attemptsLeft -= 1
 		if (attemptsLeft < 0): break
-	if (n_low(L,k,qLeft,z) >= nAff):
+	if (n_low(L,k,qLeft,z) >= nMut):
 		# this is just laziness, it really means our assumptions about the
 		# solution space are wrong
-		print("q_for_n_affected_low(L=%s,k=%d,nAff=%s)" % (L,k,nAff),file=stderr)
+		print("q_for_n_mutated_low(L=%s,k=%d,nMut=%s)" % (L,k,nMut),file=stderr)
 		print("n_low(...,qLeft=%s)=%s" % (qLeft,n_low(L,k,qLeft,z)),file=stderr)
 		raise ValueError
 
 	# at this point,
-	#	n_low(L,k,qLeft,z)  - nAff < 0
-	#	n_low(L,k,qRight,z) - nAff > 0
+	#	n_low(L,k,qLeft,z)  - nMut < 0
+	#	n_low(L,k,qRight,z) - nMut > 0
 	# so we can use the Brent's method to find the solution in the bracketed
 	# interval
-	func = lambda q: n_low(L,k,q,z)-nAff
+	func = lambda q: n_low(L,k,q,z)-nMut
 	return brentq(func,qLeft,qRight)
 
 
-# confidence interval for Naffected
+# confidence interval for Nmutated
 
 def n_low(L,k,q,z):
 	r1 = q_to_r1(k,q)
-	varN = var_n_affected(L,k,r1)
+	varN = var_n_mutated(L,k,r1)
 	return L*q - z*sqrt(varN)
 
 def n_high(L,k,q,z):
 	r1 = q_to_r1(k,q)
-	varN = var_n_affected(L,k,r1)
+	varN = var_n_mutated(L,k,r1)
 	return L*q + z*sqrt(varN)
 
 #==========
@@ -281,7 +276,7 @@ def confidence_interval_r1_from_n_island(L,k,r1,alpha):
 	return (r1Low,r1High)
 
 
-def in_confidence_interval_q_from_n_island(L,k,r1,alpha,nIslandObserved,nAffectedObserved,useInverse=True):
+def in_confidence_interval_q_from_n_island(L,k,r1,alpha,nIslandObserved,nMutatedObserved,useInverse=True):
 	return float("nan") # not implemented
 
 #==========
