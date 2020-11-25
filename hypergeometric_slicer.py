@@ -5,7 +5,15 @@ Jaccard index estimated from the sketching nucleotide mutation model, as
 described in "The statistics of kmers from a sequence undergoing a simple
 mutation process without spurious matches," Blanca, Harris, Koslicki and
 Medvedev.
-"""
+
+k:  Kmer length.
+L:  Sequence length; specifically, the number of complete KMERS in the sequence.
+    The corresponding nucleotide sequence length would be L+k-1.
+s:  Sketch size.
+m:  Number of slices.
+r1: Nucleotide substitution rate.
+q:  1-(1-r1)^k, the probability that a kmer is mutated, i.e. that a kmer
+    contains a least one substitution."""
 
 from sys         import argv,stdin,stdout,stderr,exit
 from math        import sqrt,log2,floor,ceil

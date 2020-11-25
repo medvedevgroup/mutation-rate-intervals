@@ -4,9 +4,8 @@ Formulas relating to kmers in strings subjected to independent/uniform
 nucleotide substitutions.
 
 k:  Kmer length.
-L:  Sequence length; specifically, the number of complete kmers in the sequence.
+L:  Sequence length; specifically, the number of complete KMERS in the sequence.
     The corresponding nucleotide sequence length would be L+k-1.
-s:  Sketch size.
 r1: Nucleotide substitution rate.
 q:  1-(1-r1)^k, the probability that a kmer is 'affected'. A kmer is affected
     if it contains a least one substitution.

@@ -26,7 +26,7 @@ def usage(s=None):
 usage: simulate_unit_errors [options]
   --k=<N>                   (K=) kmer size
                             (default is 28)
-  --n=<N>                   (N= or L=) sequence length (number of kmers in the
+  --n=<N>                   (N= or L=) sequence length (number of KMERS in the
                             sequence)
                             (default is 100)
   --sequences=<N>           (T=) number of sequence pairs to generate

@@ -11,7 +11,7 @@ usage: r1-from-minhash-jaccard.py [options]
   --jhat=<list>               (J=) (cumulative) observed estimates of jaccard
                               index; <list> is a comma-separated list of
                               numbers between 0 and 1
-  --length=<N>                (L=) sequence length (number of nucleotides in
+  --length=<N>                (L=) sequence length (number of NUCLEOTIDES in
                               the sequence)
                               (default is 1K)
   --k=<N>                     (K=) kmer size
