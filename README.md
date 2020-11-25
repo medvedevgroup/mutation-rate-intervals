@@ -4,7 +4,7 @@ Support for "The statistics of k-mers from a sequence undergoing a simple
 mutation process without spurious matches," Blanca, Harris, Koslicki and
 Medvedev. 2020.
 
-### Quick start for computing a confidence interval for the sketching mutation model
+### Quick start for computing an r1 confidence interval for the sketching mutation model
 
 ```bash 
 $ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
@@ -13,7 +13,7 @@ L       k  s    conf  jHat     r1Low    r1High
 4500000 21 5000 0.950 0.200000 0.048886 0.053160
 ```
 
-### Quick start for computing a confidence interval for r1 from an observation of Nmut
+### Quick start for computing an r1 confidence interval from an observation of N<sub>mut</sub>
 
 ```bash 
 $ r1-from-nmut.py L=4.5M k=21 C=0.95 N=3M
