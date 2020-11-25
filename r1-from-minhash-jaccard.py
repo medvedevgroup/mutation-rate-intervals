@@ -75,10 +75,10 @@ def main():
 	alpha = 1 - confidence
 	m = numSlices
 
-	print("\t".join(["L","k","s","alpha","jHat","r1Low","r1High"]))
+	print("\t".join(["L","k","s","conf","jHat","r1Low","r1High"]))
 	for jHat in jaccardObserved:
 		(r1Low,r1High) = hgslicer.r1_confidence_interval(L,k,s,alpha,m,jHat)
-		print("%d\t%d\t%d\t%.3f\t%.6f\t%.6f\t%.6f" % (L,k,s,alpha,jHat,r1Low,r1High))
+		print("%d\t%d\t%d\t%.3f\t%.6f\t%.6f\t%.6f" % (L,k,s,confidence,jHat,r1Low,r1High))
 
 
 # parse_probability--
