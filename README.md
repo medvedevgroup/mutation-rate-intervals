@@ -9,50 +9,16 @@ Medvedev. 2020.
 ```bash 
 $ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
 # (may take about a minute)
-L       k  s    alpha jHat     r1Low    r1High
-4500000 21 5000 0.050 0.200000 0.048886 0.053160
-```
-
-
-## Older Details
-
-### Quick start for computing a confidence interval for the sketching mutation model
-
-In a python3 interactive shell:
-```bash 
-import hypergeometric_slicer as hgslicer
-
-L = 4500000        # number of kmers in sequence (4.5M)
-k = 21             # kmer size
-sketchSize = 5000  # size of bottom sketches (5K)
-jHat = 0.20        # jaccard index observed in an experiment
-confidence = 0.95
-numSlices = 100    # number of slices (see manuscript)
-
-hgslicer.r1_confidence_interval(L,k,sketchSize,1-confidence,numSlices,jHat)
-# (may take about a minute)
-# result is ≈ (0.048886,0.053160)
+L       k  s    conf  jHat     r1Low    r1High
+4500000 21 5000 0.950 0.200000 0.048886 0.053160
 ```
 
 ### Quick start for computing a confidence interval for r1 from an observation of Nmut
 
-In a python3 interactive shell:
 ```bash 
-import kmer_mutation_formulas_v1 as v1
-
-L = 4500000        # number of kmers in sequence (4.5M)
-k = 21             # kmer size
-nMut = 3000000     # number of mutated kmers observed in an experiment
-confidence = 0.95
-
-alpha = 1-confidence
-z = v1.probit(1-alpha/2)
-q1 = v1.q_for_n_affected_high(L,k,nMut,z)
-q2 = v1.q_for_n_affected_low (L,k,nMut,z)
-r1Low  = v1.q_to_r1(k,q1)
-r1High = v1.q_to_r1(k,q2)
-(r1Low,r1High)
-# result is ≈ (0.050725,0.051215)
+$ r1-from-nmut.py L=4.5M k=21 C=0.95 N=3M
+L       k  conf  nMut    r1Low    r1High
+4500000 21 0.950 3000000 0.050725 0.051215
 ```
 
 ### Prerequisites
@@ -78,7 +44,9 @@ simulate_nucleotide_errors are not available.
 
 ### Usage Overview
 
-The package has five parts:
+The package has six parts:
+* Two front-send modules to compute theoretical confidence intervals:
+r1-from-minhash-jaccard.py and r1-from-nmut.py.
 * A module to compute the theoretical confidence intervals for the sketching
 mutation model described as theorem 6 in the manuscript:
 hypergeometric_slicer.py.
@@ -93,6 +61,6 @@ confidence intervals of theorem 6: evaluate_hypergeometric_slicer.py.
 simulate_nucleotide_errors_v1.py. These perform both simulation and
 evaluation for theorem 5. 
 
-Above we describe only the confidence interval module. The simulation and
+Above we describe only the confidence interval modules. The simulation and
 evaluation programs are described in the reproducibility folder.
 
