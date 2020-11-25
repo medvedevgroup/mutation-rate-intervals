@@ -16,9 +16,9 @@ L       k  s    conf  jHat     r1Low    r1High
 ### Quick start for computing an r1 confidence interval from an observation of N<sub>mut</sub>
 
 ```bash 
-$ r1-from-nmut.py L=4.5M k=21 C=0.95 N=3M
+$ r1-from-nmut.py L=4.5M k=21 C=0.95 N=2997034
 L       k  conf  nMut    r1Low    r1High
-4500000 21 0.950 3000000 0.050725 0.051215
+4500000 21 0.950 3000000 0.050636 0.051126
 ```
 
 ### Prerequisites
