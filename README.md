@@ -10,7 +10,7 @@ Medvedev. 2020.
 $ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
 # (may take about a minute)
 L       k  s    conf  jHat     r1Low    r1High
-4500000 21 5000 0.950 0.200000 0.048886 0.053160
+4499980 21 5000 0.950 0.200000 0.048886 0.053160
 ```
 
 ### Quick start for computing an r1 confidence interval from an observation of N<sub>mut</sub>
@@ -18,7 +18,8 @@ L       k  s    conf  jHat     r1Low    r1High
 ```bash 
 $ r1-from-nmut.py L=4.5M k=21 C=0.95 N=2997034
 L       k  conf  nMut    r1Low    r1High
-4500000 21 0.950 2997034 0.050636 0.051126
+4499980 21 0.950 2997034 0.050636 0.051126
+
 ```
 
 ### Prerequisites

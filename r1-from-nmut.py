@@ -11,7 +11,8 @@ usage: r1-from-nmut.py [options]
   --nmut=<list>               (N=) (cumulative) observed estimates of jaccard
                               index; <list> is a comma-separated list of
                               numbers
-  --length=<N>                (L=) number of kmers in the sequence
+  --length=<N>                (L=) sequence length (number of nucleotides in
+                              the sequence)
                               (default is 1K)
   --k=<N>                     (K=) kmer size
                               (default is 21)
@@ -27,10 +28,10 @@ def main():
 
 	# parse the command line
 
-	nMutationObserved    = []
-	kmerSequenceLength = 1*1000
-	kmerSize           = 21
-	confidence         = 0.95
+	nMutationObserved = []
+	ntSequenceLength  = 1*1000
+	kmerSize          = 21
+	confidence        = 0.95
 
 	for arg in argv[1:]:
 		if ("=" in arg):
@@ -39,7 +40,7 @@ def main():
 		if (arg.lower().startswith("--nmut=")) or (arg.upper().startswith("N=")):
 			nMutationObserved += list(map(int_with_unit,argVal.split(",")))
 		elif (arg.startswith("--set=")) or (arg.startswith("L=")):
-			kmerSequenceLength = int_with_unit(argVal)
+			ntSequenceLength = int_with_unit(argVal)
 		elif (arg.startswith("--kmer=")) or (arg.upper().startswith("K=")):
 			kmerSize = int(argVal)
 		elif (arg.startswith("--confidence=")) or (arg.startswith("C=")):
@@ -54,7 +55,7 @@ def main():
 
 	# compute the confidence interval(s)
 
-	L = kmerSequenceLength
+	L = ntSequenceLength - (kmerSize-1)
 	k = kmerSize
 	alpha = 1 - confidence
 	z = v1.probit(1-alpha/2)

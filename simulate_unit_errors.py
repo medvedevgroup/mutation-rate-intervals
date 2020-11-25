@@ -20,7 +20,8 @@ def usage(s=None):
 usage: simulate_unit_errors [options]
   --k=<N>                   (K=) kmer size
                             (default is 21)
-  --n=<N>                   (N= or L=) sequence length
+  --n=<N>                   (N= or L=) sequence length (number of kmers in the
+                            sequence)
                             (default is 100)
   --sketch=<N>              (S=) (cumulative) sketch size
                             (default is "no sketch")

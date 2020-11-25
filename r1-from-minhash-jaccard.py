@@ -11,7 +11,8 @@ usage: r1-from-minhash-jaccard.py [options]
   --jhat=<list>               (J=) (cumulative) observed estimates of jaccard
                               index; <list> is a comma-separated list of
                               numbers between 0 and 1
-  --length=<N>                (L=) number of kmers in the sequence
+  --length=<N>                (L=) sequence length (number of nucleotides in
+                              the sequence)
                               (default is 1K)
   --k=<N>                     (K=) kmer size
                               (default is 21)
@@ -31,12 +32,12 @@ def main():
 
 	# parse the command line
 
-	jaccardObserved    = []
-	kmerSequenceLength = 1*1000
-	kmerSize           = 21
-	sketchSize         = None
-	confidence         = 0.95
-	numSlices          = 100
+	jaccardObserved  = []
+	ntSequenceLength = 1*1000
+	kmerSize         = 21
+	sketchSize       = None
+	confidence       = 0.95
+	numSlices        = 100
 
 	for arg in argv[1:]:
 		if ("=" in arg):
@@ -45,7 +46,7 @@ def main():
 		if (arg.lower().startswith("--jhat=")) or (arg.upper().startswith("J=")):
 			jaccardObserved += list(map(parse_probability,argVal.split(",")))
 		elif (arg.startswith("--set=")) or (arg.startswith("L=")):
-			kmerSequenceLength = int_with_unit(argVal)
+			ntSequenceLength = int_with_unit(argVal)
 		elif (arg.startswith("--kmer=")) or (arg.upper().startswith("K=")):
 			kmerSize = int(argVal)
 		elif (arg.startswith("--sketch=")) or (arg.startswith("S=")):
@@ -67,7 +68,7 @@ def main():
 
 	# compute the confidence interval(s)
 
-	L = kmerSequenceLength
+	L = ntSequenceLength - (kmerSize-1)
 	k = kmerSize
 	s = sketchSize
 	alpha = 1 - confidence
