@@ -1,8 +1,19 @@
 # mutation-rate-intervals
 
-Support for "The statistics of k-mers from a sequence undergoing a simple
-mutation process without spurious matches," Blanca, Harris, Koslicki and
-Medvedev. 2020.
+This software calculates confidence intervals and hypothesis tests for various variables under a simple nucleotide mutation process. In this model, a sequence B evolves from a sequence A by independently mutating every nucleotide with probability r1. What is observed may be
+* the number of mutated k-mers
+* the Jaccard between A and B
+* the minsketch Jaccard estimate between A and B
+The model assumes that k is large enough so that the effect of repetitive k-mers is negligible (see paper for details).
+
+In particular, the software can be used to compute the following:
+* given a mutation rate r1, a hypothesis test for the observed number of mutated k-mers, the observed Jaccard, or the observed minhash Jaccard estimate
+* Given the observed number of mutated k-mers, the observed Jaccard, or the observed minhash Jaccard estimate, a confidence interval for the mutation rate r1.
+
+The two most common cases where this is applicable are
+* There are two sequences that have evolved from a common ancestor and we observe their Jaccard similarity. What was the mutation rate r1?
+* There is a read r generated with a known error rate r1. We would like to know if r was generated from a sequence s based on the observed Jaccard between them.
+
 
 ### Quick start for computing an r1 confidence interval for the sketching mutation model
 
@@ -64,4 +75,7 @@ evaluation for theorem 5.
 
 Above we describe only the confidence interval command-line programs. The
 simulation and evaluation programs are described in the reproducibility folder.
+
+### Citation
+* Antonio Blanca, Robert S. Harris, David Koslicki and Paul Medvedev, "The statistics of k-mers from a sequence undergoing a simple mutation process without spurious matches", submitted 
 
