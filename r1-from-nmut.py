@@ -7,6 +7,9 @@ import kmer_mutation_formulas_v1 as v1
 
 def usage(s=None):
 	message = """
+Compute confidence interval for the mutation rate r1, given the observed number
+of mutated k-mers.
+
 usage: r1-from-nmut.py [options]
   --nmut=<list>               (N=) (cumulative) observed estimates of jaccard
                               index; <list> is a comma-separated list of
@@ -62,8 +65,8 @@ def main():
 
 	print("\t".join(["L","k","conf","nMut","r1Low","r1High"]))
 	for nMut in nMutationObserved:
-		q1 = v1.q_for_n_affected_high(L,k,nMut,z)
-		q2 = v1.q_for_n_affected_low (L,k,nMut,z)
+		q1 = v1.q_for_n_mutated_high(L,k,nMut,z)
+		q2 = v1.q_for_n_mutated_low (L,k,nMut,z)
 		r1Low  = v1.q_to_r1(k,q1)
 		r1High = v1.q_to_r1(k,q2)
 		print("%d\t%d\t%.3f\t%d\t%.6f\t%.6f" % (L,k,confidence,nMut,r1Low,r1High))

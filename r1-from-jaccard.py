@@ -2,16 +2,16 @@
 
 from sys  import argv,stdin,stdout,stderr,exit
 from math import ceil
-import hypergeometric_slicer as hgslicer
+import kmer_mutation_formulas_v1 as v1
 
 
 def usage(s=None):
 	message = """
 Compute confidence interval for the mutation rate r1, given the observed
-minhash Jaccard estimate.
+Jaccard.
 
-usage: r1-from-minhash-jaccard.py [options]
-  --jhat=<list>               (J=) (cumulative) observed estimates of jaccard
+usage: r1-from-jaccard.py [options]
+  --jhat=<list>               (J=) (cumulative) observations of jaccard
                               index; <list> is a comma-separated list of
                               numbers between 0 and 1
   --length=<N>                (L=) sequence length (number of NUCLEOTIDES in
@@ -19,12 +19,8 @@ usage: r1-from-minhash-jaccard.py [options]
                               (default is 1K)
   --k=<N>                     (K=) kmer size
                               (default is 21)
-  --sketch=<N>                (S=) sketch size
-                              (there is no default)
   --confidence=<probability>  (C=) size of confidence interval
-                              (default is 95%)
-  --slices=<N>                (m=) number of slices
-                              (default is 100)"""
+                              (default is 95%)"""
 
 	if (s == None): exit (message)
 	else:           exit ("%s\n%s" % (s,message))
@@ -38,9 +34,7 @@ def main():
 	jaccardObserved  = []
 	ntSequenceLength = 1*1000
 	kmerSize         = 21
-	sketchSize       = None
 	confidence       = 0.95
-	numSlices        = 100
 
 	for arg in argv[1:]:
 		if ("=" in arg):
@@ -52,12 +46,8 @@ def main():
 			ntSequenceLength = int_with_unit(argVal)
 		elif (arg.startswith("--kmer=")) or (arg.upper().startswith("K=")):
 			kmerSize = int(argVal)
-		elif (arg.startswith("--sketch=")) or (arg.startswith("S=")):
-			sketchSize = int_with_unit(argVal)
 		elif (arg.startswith("--confidence=")) or (arg.startswith("C=")):
 			confidence = parse_probability(argVal)
-		elif (arg.startswith("--slices=")) or (arg.lower().startswith("m=")): \
-			numSlices = int(argVal)
 		elif (arg.startswith("--")):
 			usage("unrecognized option: %s" % arg)
 		else:
@@ -66,21 +56,21 @@ def main():
 	if (jaccardObserved == []):
 		usage("you have to give me at least one jaccard estimate")
 
-	if (sketchSize == None):
-		usage("you have to tell me the sketch size")
-
 	# compute the confidence interval(s)
 
 	L = ntSequenceLength - (kmerSize-1)
 	k = kmerSize
-	s = sketchSize
 	alpha = 1 - confidence
-	m = numSlices
+	z = v1.probit(1-alpha/2)
 
-	print("\t".join(["L","k","s","conf","slices","jHat","r1Low","r1High"]))
-	for jHat in jaccardObserved:
-		(r1Low,r1High) = hgslicer.r1_confidence_interval(L,k,s,alpha,m,jHat)
-		print("%d\t%d\t%d\t%.3f\t%d\t%.6f\t%.6f\t%.6f" % (L,k,s,confidence,m,jHat,r1Low,r1High))
+	print("\t".join(["L","k","conf","jaccard","r1Low","r1High"]))
+	for jaccard in jaccardObserved:
+		nMut = L * (1-jaccard)/(1+jaccard)
+		q1 = v1.q_for_n_mutated_high(L,k,nMut,z)
+		q2 = v1.q_for_n_mutated_low (L,k,nMut,z)
+		r1Low  = v1.q_to_r1(k,q1)
+		r1High = v1.q_to_r1(k,q2)
+		print("%d\t%d\t%.3f\t%.6f\t%.6f\t%.6f" % (L,k,confidence,jaccard,r1Low,r1High))
 
 
 # parse_probability--
