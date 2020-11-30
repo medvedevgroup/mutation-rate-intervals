@@ -31,8 +31,19 @@ L       k  conf  r1       nMutLow nMutHigh
 4499980 21 0.950 0.050000 2959262 2975657
 ```
 
-To compute an r1 confidence interval from an observed number of mutated k-mers:
+To compute a hypothesis test for the observed Jaccard index:
+```bash 
+$ r1-to-jaccard-hypothesis.py L=4.5M k=21 C=0.95 r1=.05
+L       k  conf  r1       jLow     jHigh
+4499980 21 0.950 0.050000 0.203905 0.206552
+```
 
+To compute a hypothesis test for the observed minhash Jaccard estimate:
+```bash 
+TBD
+```
+
+To compute an r1 confidence interval from an observed number of mutated k-mers:
 ```bash 
 $ r1-from-nmut.py L=4.5M k=21 C=0.95 N=2997034
 L       k  conf  nMut    r1Low    r1High
@@ -40,7 +51,6 @@ L       k  conf  nMut    r1Low    r1High
 ```
 
 To compute an r1 confidence interval from an observed Jaccard index:
-
 ```bash 
 $ r1-from-jaccard.py L=4.5M k=21 C=0.95 J=0.20
 L       k  conf  jaccard  r1Low    r1High
@@ -49,7 +59,6 @@ L       k  conf  jaccard  r1Low    r1High
 
 To compute an r1 confidence interval from an observed minhash Jaccard estimate
 in the sketching mutation model:
-
 ```bash 
 $ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
 # (may take about a minute)
@@ -88,8 +97,13 @@ simulate_nucleotide_errors are not available.
 ### Usage Overview
 
 The package has six parts:
-* Two command-line programs to compute theoretical confidence intervals:
-r1-from-minhash-jaccard.py and r1-from-nmut.py.
+* Six command-line programs to compute theoretical hypothesis tests or confidence intervals:
+r1-to-nmut-hypothesis.py,
+r1-to-jaccard-hypothesis.py,
+r1-to-minhash-jaccard-hypothesis.py,
+r1-from-nmut.py,
+r1-from-jaccard.py,
+and r1-from-minhash-jaccard.py,
 * A module to compute the theoretical confidence intervals for the sketching
 mutation model described as theorem 6 in the manuscript:
 hypergeometric_slicer.py.
