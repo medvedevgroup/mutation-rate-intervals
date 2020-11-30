@@ -4,7 +4,6 @@ This software calculates confidence intervals and hypothesis tests for various v
 * the number of mutated k-mers
 * the Jaccard between A and B
 * the minsketch Jaccard estimate between A and B
-The model assumes that k is large enough so that the effect of repetitive k-mers is negligible (see paper for details).
 
 In particular, the software can be used to compute the following:
 * given a mutation rate r1, a hypothesis test for the observed number of mutated k-mers, the observed Jaccard, or the observed minhash Jaccard estimate
@@ -15,7 +14,9 @@ The two most common cases where this is applicable are
 * There is a read r generated with a known error rate r1. We would like to know if r was generated from a sequence s based on the observed Jaccard between them.
 
 
-### Quick start for computing an r1 confidence interval for the sketching mutation model
+### Quick start
+
+To compute an r1 confidence interval for the sketching mutation model
 
 ```bash 
 $ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
@@ -24,7 +25,7 @@ L       k  s    conf  jHat     r1Low    r1High
 4499980 21 5000 0.950 0.200000 0.048886 0.053160
 ```
 
-### Quick start for computing an r1 confidence interval from an observation of N<sub>mut</sub>
+To compute an r1 confidence interval from an observation of N<sub>mut</sub>
 
 ```bash 
 $ r1-from-nmut.py L=4.5M k=21 C=0.95 N=2997034
@@ -32,6 +33,13 @@ L       k  conf  nMut    r1Low    r1High
 4499980 21 0.950 2997034 0.050636 0.051126
 
 ```
+
+### How to choose parameters
+
+The model assumes that k is large enough so that the effect of repetitive k-mers is negligible and that there are only point mutations (see paper for details). In this situation, L is the sequence length and N is the number of k-mers of A that are not in B (in this model, this is the same as the number of k-mers of B that are not in A).
+In reality, these assumptions may be violated. 
+How to handle it depends on the use cases, as follows:
+TODO
 
 ### Prerequisites
 
