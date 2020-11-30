@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 
 from sys  import argv,stdin,stdout,stderr,exit
-from math import ceil
+from math import floor,ceil
 import kmer_mutation_formulas_v1 as v1
 
 
 def usage(s=None):
 	message = """
-Compute confidence interval for the mutation rate r1, given the observed number
-of mutated k-mers.
+Compute hypothesis test for the number of mutated k-mers, given the mutation
+rate r1.
 
-usage: r1-from-nmut.py [options]
-  --nmut=<list>               (N=) (cumulative) observed number of mutated
-                              k-mers; <list> is a comma-separated list of
-                              numbers
+usage: r1-to-nmut-hypothesis.py [options]
+  --r1=<list>                 (R1=) (cumulative) mutation rate; <list> is a
+                              comma-separated list of probabilities
   --length=<N>                (L=) sequence length (number of NUCLEOTIDES in
                               the sequence)
                               (default is 1K)
@@ -31,7 +30,7 @@ def main():
 
 	# parse the command line
 
-	nMutationObserved = []
+	r1Values          = []
 	ntSequenceLength  = 1*1000
 	kmerSize          = 21
 	confidence        = 0.95
@@ -40,8 +39,8 @@ def main():
 		if ("=" in arg):
 			argVal = arg.split("=",1)[1]
 
-		if (arg.lower().startswith("--nmut=")) or (arg.upper().startswith("N=")):
-			nMutationObserved += list(map(int_with_unit,argVal.split(",")))
+		if (arg.lower().startswith("--r1=")) or (arg.upper().startswith("R1=")):
+			r1Values += list(map(parse_probability,argVal.split(",")))
 		elif (arg.startswith("--set=")) or (arg.startswith("L=")):
 			ntSequenceLength = int_with_unit(argVal)
 		elif (arg.startswith("--kmer=")) or (arg.upper().startswith("K=")):
@@ -53,8 +52,8 @@ def main():
 		else:
 			usage("unrecognized option: %s" % arg)
 
-	if (nMutationObserved == []):
-		usage("you have to give me at least one nMut observation")
+	if (r1Values == []):
+		usage("you have to give me at least one r1 probability")
 
 	# compute the confidence interval(s)
 
@@ -63,13 +62,12 @@ def main():
 	alpha = 1 - confidence
 	z = v1.probit(1-alpha/2)
 
-	print("\t".join(["L","k","conf","nMut","r1Low","r1High"]))
-	for nMut in nMutationObserved:
-		q1 = v1.q_for_n_mutated_high(L,k,nMut,z)
-		q2 = v1.q_for_n_mutated_low (L,k,nMut,z)
-		r1Low  = v1.q_to_r1(k,q1)
-		r1High = v1.q_to_r1(k,q2)
-		print("%d\t%d\t%.3f\t%d\t%.6f\t%.6f" % (L,k,confidence,nMut,r1Low,r1High))
+	print("\t".join(["L","k","conf","r1","nMutLow","nMutHigh"]))
+	for r1 in r1Values:
+		q = v1.r1_to_q(k,r1)
+		nMutLow  = max(0,floor(v1.n_low (L,k,q,z)))
+		nMutHigh = min(L,ceil (v1.n_high(L,k,q,z)))
+		print("%d\t%d\t%.3f\t%.6f\t%d\t%d" % (L,k,confidence,r1,nMutLow,nMutHigh))
 
 
 # parse_probability--

@@ -24,6 +24,13 @@ The two most common cases where this is applicable are
 
 ### Quick start
 
+To compute a hypothesis test for the observed number of mutated k-mers:
+```bash 
+$ r1-to-nmut-hypothesis.py L=4.5M k=21 C=0.95 r1=.05
+L       k  conf  r1       nMutLow nMutHigh
+4499980 21 0.950 0.050000 2959262 2975657
+```
+
 To compute an r1 confidence interval from an observed number of mutated k-mers:
 
 ```bash 
