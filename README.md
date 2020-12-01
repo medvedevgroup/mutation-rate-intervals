@@ -9,11 +9,9 @@ probability r1. What is observed may be
 * the minsketch Jaccard estimate between A and B
 
 In particular, the software can be used to compute the following:
-* given a mutation rate r1, a hypothesis test for the observed number of
-  mutated k-mers, the observed Jaccard, or the observed minhash Jaccard estimate
-* Given the observed number of mutated k-mers, the observed Jaccard, or the
-  observed minhash Jaccard estimate, a confidence interval for the mutation
-  rate r1.
+* given a mutation rate r1, and a variable X (e.g. the number of mutated k-mers, the Jaccard similarity, or the minhash Jaccard estimate),
+an interval such that the observed X lies in it with a given probability (e.g. 95%) (this is a hypothesis test for X)
+* Given the observed value of X, an interval such that the mutation rate r1 lies in it with a given probability (e.g. 95%) (this is a confidence interval for r1).
 
 The two most common cases where this is applicable are
 * There are two sequences that have evolved from a common ancestor and we
