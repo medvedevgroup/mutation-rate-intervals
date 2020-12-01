@@ -13,9 +13,12 @@ rate r1.
 usage: r1-to-minhash-jaccard-hypothesis.py [options]
   --r1=<list>                   (R1=) (cumulative) mutation rate; <list> is a
                                 comma-separated list of probabilities
-  --length=<N>                  (L=) sequence length (number of NUCLEOTIDES in
+  --length=<N>                  (l=) sequence length (number of NUCLEOTIDES in
                                 the sequence)
-                                (default is 1K)
+                                (default is 1000 plus kmer size minus 1)
+  L=<N>                         (L=) sequence length (number of KMERS in
+                                the sequence)
+                                (default is 1000)
   --k=<N>                       (K=) kmer size
                                 (default is 21)
   --sketch=<N>                  (S=) sketch size
@@ -34,12 +37,13 @@ def main():
 
 	# parse the command line
 
-	r1Values         = []
-	ntSequenceLength = 1*1000
-	kmerSize         = 21
-	sketchSize       = None
-	confidence       = 0.95
-	numSlices        = 100
+	r1Values           = []
+	ntSequenceLength   = None
+	kmerSequenceLength = None
+	kmerSize           = 21
+	sketchSize         = None
+	confidence         = 0.95
+	numSlices          = 100
 
 	for arg in argv[1:]:
 		if ("=" in arg):
@@ -47,8 +51,10 @@ def main():
 
 		if (arg.lower().startswith("--r1=")) or (arg.upper().startswith("R1=")):
 			r1Values += list(map(parse_probability,argVal.split(",")))
-		elif (arg.startswith("--set=")) or (arg.startswith("L=")):
+		elif (arg.startswith("--length=")) or (arg.startswith("l=")):
 			ntSequenceLength = int_with_unit(argVal)
+		elif(arg.startswith("L=")):
+			kmerSequenceLength = int_with_unit(argVal)
 		elif (arg.startswith("--kmer=")) or (arg.upper().startswith("K=")):
 			kmerSize = int(argVal)
 		elif (arg.startswith("--sketch=")) or (arg.startswith("S=")):
@@ -67,6 +73,14 @@ def main():
 
 	if (sketchSize == None):
 		usage("you have to tell me the sketch size")
+
+	if (ntSequenceLength != None) and (kmerSequenceLength != None):
+		if (kmerSequenceLength != ntSequenceLength + kmerSize-1):
+			usage("nucleotide and kmer sequence lengths are inconsistent\nyou only need to specify one of them")
+	elif (kmerSequenceLength != None):
+		ntSequenceLength = kmerSequenceLength + (kmerSize-1)
+	elif (ntSequenceLength == None):
+		ntSequenceLength = 1000 + (kmerSize-1)
 
 	# compute the interval(s)
 

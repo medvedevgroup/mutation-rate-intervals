@@ -28,35 +28,35 @@ To compute a hypothesis test for the observed number of mutated k-mers:
 ```bash 
 $ r1-to-nmut-hypothesis.py L=4.5M k=21 C=0.95 r1=.05
 L       k  sig   r1       nMutLow nMutHigh
-4499980 21 0.950 0.050000 2959262 2975657
+4500000 21 0.950 0.050000 2959275 2975671
 ```
 
 To compute a hypothesis test for the observed Jaccard index:
 ```bash 
 $ r1-to-jaccard-hypothesis.py L=4.5M k=21 C=0.95 r1=.05
 L       k  sig   r1       jLow     jHigh
-4499980 21 0.950 0.050000 0.203905 0.206552
+4500000 21 0.950 0.050000 0.203905 0.206552
 ```
 
 To compute a hypothesis test for the observed minhash Jaccard estimate:
 ```bash 
 $ r1-to-minhash-jaccard-hypothesis.py L=4.5M k=21 S=5K C=0.95 r1=.05
 L       k  s    sig   slices r1       jHatLow  jHatHigh
-4499980 21 5000 0.950 100    0.050000 0.194000 0.216800
+4500000 21 5000 0.950 100    0.050000 0.194000 0.216800
 ```
 
 To compute an r<sub>1</sub> confidence interval from an observed number of mutated k-mers:
 ```bash 
 $ r1-from-nmut.py L=4.5M k=21 C=0.95 N=2997034
 L       k  conf  nMut    r1Low    r1High
-4499980 21 0.950 2997034 0.050636 0.051126
+4500000 21 0.950 2997034 0.050636 0.051126
 ```
 
 To compute an r<sub>1</sub> confidence interval from an observed Jaccard index:
 ```bash 
 $ r1-from-jaccard.py L=4.5M k=21 C=0.95 J=0.20
 L       k  conf  jaccard  r1Low    r1High
-4499980 21 0.950 0.200000 0.050725 0.051215
+4500000 21 0.950 0.200000 0.050725 0.051215
 ```
 
 To compute an r<sub>1</sub> confidence interval from an observed minhash Jaccard estimate
@@ -64,8 +64,8 @@ in the sketching mutation model:
 ```bash 
 $ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 J=0.20
 # (may take about a minute)
-L       k  s    conf  jHat     slices r1Low    r1High
-4499980 21 5000 0.950 0.200000 100    0.048886 0.053160
+L       k  s    conf  slices jHat     r1Low    r1High
+4500000 21 5000 0.950 100    0.200000 0.048886 0.053160
 ```
 
 ### How to choose L and other parameters

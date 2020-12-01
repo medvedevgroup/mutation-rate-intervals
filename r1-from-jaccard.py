@@ -14,9 +14,12 @@ usage: r1-from-jaccard.py [options]
   --jhat=<list>               (J=) (cumulative) observations of jaccard
                               index; <list> is a comma-separated list of
                               numbers between 0 and 1
-  --length=<N>                (L=) sequence length (number of NUCLEOTIDES in
+  --length=<N>                (l=) sequence length (number of NUCLEOTIDES in
                               the sequence)
-                              (default is 1K)
+                              (default is 1000 plus kmer size minus 1)
+  L=<N>                       (L=) sequence length (number of KMERS in
+                              the sequence)
+                              (default is 1000)
   --k=<N>                     (K=) kmer size
                               (default is 21)
   --confidence=<probability>  (C=) size of confidence interval
@@ -31,10 +34,11 @@ def main():
 
 	# parse the command line
 
-	jaccardObserved  = []
-	ntSequenceLength = 1*1000
-	kmerSize         = 21
-	confidence       = 0.95
+	jaccardObserved    = []
+	ntSequenceLength   = None
+	kmerSequenceLength = None
+	kmerSize           = 21
+	confidence         = 0.95
 
 	for arg in argv[1:]:
 		if ("=" in arg):
@@ -42,8 +46,10 @@ def main():
 
 		if (arg.lower().startswith("--jhat=")) or (arg.upper().startswith("J=")):
 			jaccardObserved += list(map(parse_probability,argVal.split(",")))
-		elif (arg.startswith("--set=")) or (arg.startswith("L=")):
+		elif (arg.startswith("--length=")) or (arg.startswith("l=")):
 			ntSequenceLength = int_with_unit(argVal)
+		elif(arg.startswith("L=")):
+			kmerSequenceLength = int_with_unit(argVal)
 		elif (arg.startswith("--kmer=")) or (arg.upper().startswith("K=")):
 			kmerSize = int(argVal)
 		elif (arg.startswith("--confidence=")) or (arg.startswith("C=")):
@@ -55,6 +61,14 @@ def main():
 
 	if (jaccardObserved == []):
 		usage("you have to give me at least one jaccard estimate")
+
+	if (ntSequenceLength != None) and (kmerSequenceLength != None):
+		if (kmerSequenceLength != ntSequenceLength + kmerSize-1):
+			usage("nucleotide and kmer sequence lengths are inconsistent\nyou only need to specify one of them")
+	elif (kmerSequenceLength != None):
+		ntSequenceLength = kmerSequenceLength + (kmerSize-1)
+	elif (ntSequenceLength == None):
+		ntSequenceLength = 1000 + (kmerSize-1)
 
 	# compute the confidence interval(s)
 
