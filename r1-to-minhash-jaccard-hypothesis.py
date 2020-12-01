@@ -11,19 +11,19 @@ Compute hypothesis test for the minhash Jaccard estimate, given the mutation
 rate r1.
 
 usage: r1-to-minhash-jaccard-hypothesis.py [options]
-  --r1=<list>                 (R1=) (cumulative) mutation rate; <list> is a
-                              comma-separated list of probabilities
-  --length=<N>                (L=) sequence length (number of NUCLEOTIDES in
-                              the sequence)
-                              (default is 1K)
-  --k=<N>                     (K=) kmer size
-                              (default is 21)
-  --sketch=<N>                (S=) sketch size
-                              (there is no default)
-  --confidence=<probability>  (C=) size of confidence interval
-                              (default is 95%)
-  --slices=<N>                (m=) number of slices
-                              (default is 100)"""
+  --r1=<list>                   (R1=) (cumulative) mutation rate; <list> is a
+                                comma-separated list of probabilities
+  --length=<N>                  (L=) sequence length (number of NUCLEOTIDES in
+                                the sequence)
+                                (default is 1K)
+  --k=<N>                       (K=) kmer size
+                                (default is 21)
+  --sketch=<N>                  (S=) sketch size
+                                (there is no default)
+  --significance=<probability>  (C=) significance level
+                                (default is 95%)
+  --slices=<N>                  (m=) number of slices
+                                (default is 100)"""
 
 	if (s == None): exit (message)
 	else:           exit ("%s\n%s" % (s,message))
@@ -53,7 +53,7 @@ def main():
 			kmerSize = int(argVal)
 		elif (arg.startswith("--sketch=")) or (arg.startswith("S=")):
 			sketchSize = int_with_unit(argVal)
-		elif (arg.startswith("--confidence=")) or (arg.startswith("C=")):
+		elif (arg.startswith("--significance=")) or (arg.startswith("C=")):
 			confidence = parse_probability(argVal)
 		elif (arg.startswith("--slices=")) or (arg.lower().startswith("m=")): \
 			numSlices = int(argVal)
@@ -68,7 +68,7 @@ def main():
 	if (sketchSize == None):
 		usage("you have to tell me the sketch size")
 
-	# compute the confidence interval(s)
+	# compute the interval(s)
 
 	L = ntSequenceLength - (kmerSize-1)
 	k = kmerSize
@@ -76,7 +76,7 @@ def main():
 	alpha = 1 - confidence
 	m = numSlices
 
-	print("\t".join(["L","k","s","conf","slices","r1","jHatLow","jHatHigh"]))
+	print("\t".join(["L","k","s","sig","slices","r1","jHatLow","jHatHigh"]))
 	for r1 in r1Values:
 		(jLow,jHigh) = hgslicer.jaccard_bounds(L,k,r1,s,alpha,m)
 		print("%d\t%d\t%d\t%.3f\t%d\t%.6f\t%.6f\t%.6f" % (L,k,s,confidence,m,r1,jLow,jHigh))

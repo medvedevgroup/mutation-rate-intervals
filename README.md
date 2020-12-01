@@ -3,21 +3,22 @@
 This software calculates confidence intervals and hypothesis tests for various
 variables under a simple nucleotide mutation process. In this model, a sequence
 B evolves from a sequence A by independently mutating every nucleotide with
-probability r1. We then observe a variable X which may be one of the following:
+probability r<sub>1</sub>. We then observe a variable X which may be one of the
+following:
 * the number of mutated k-mers
 * the Jaccard between A and B
 * the minsketch Jaccard estimate between A and B
 
 The software can be used to compute the following:
-* given a mutation rate r1 and a desired significance level C (e.g. 95%), an interval such that the observed X lies in it with probability C 
+* given a mutation rate r<sub>1</sub> and a desired significance level C (e.g. 95%), an interval such that the observed X lies in it with probability C 
 (i.e. a hypothesis test for X)
-* Given the observed value of X and a desired confidence C (e.g. 95%), an interval such that the mutation rate r1 lies in it with probability C 
-(i.e. a confidence interval for r1).
+* Given the observed value of X and a desired confidence C (e.g. 95%), an interval such that the mutation rate r<sub>1</sub> lies in it with probability C 
+(i.e. a confidence interval for r<sub>1</sub>).
 
 The two most common cases where this is applicable are
 * There are two sequences that have evolved from a common ancestor and we
-  observe X. What was the mutation rate r1?
-* There is a read R generated with a known error rate r1. We would like to know
+  observe X. What was the mutation rate r<sub>1</sub>?
+* There is a read R generated with a known error rate r<sub>1</sub>. We would like to know
   if R was generated from a sequence s based on the observed X between
   them.
 
@@ -26,39 +27,39 @@ The two most common cases where this is applicable are
 To compute a hypothesis test for the observed number of mutated k-mers:
 ```bash 
 $ r1-to-nmut-hypothesis.py L=4.5M k=21 C=0.95 r1=.05
-L       k  conf  r1       nMutLow nMutHigh
+L       k  sig   r1       nMutLow nMutHigh
 4499980 21 0.950 0.050000 2959262 2975657
 ```
 
 To compute a hypothesis test for the observed Jaccard index:
 ```bash 
 $ r1-to-jaccard-hypothesis.py L=4.5M k=21 C=0.95 r1=.05
-L       k  conf  r1       jLow     jHigh
+L       k  sig   r1       jLow     jHigh
 4499980 21 0.950 0.050000 0.203905 0.206552
 ```
 
 To compute a hypothesis test for the observed minhash Jaccard estimate:
 ```bash 
 $ r1-to-minhash-jaccard-hypothesis.py L=4.5M k=21 S=5K C=0.95 m=100 r1=.05
-L       k  s    conf  slices r1       jHatLow  jHatHigh
+L       k  s    sig   slices r1       jHatLow  jHatHigh
 4499980 21 5000 0.950 100    0.050000 0.194000 0.216800
 ```
 
-To compute an r1 confidence interval from an observed number of mutated k-mers:
+To compute an r<sub>1</sub> confidence interval from an observed number of mutated k-mers:
 ```bash 
 $ r1-from-nmut.py L=4.5M k=21 C=0.95 N=2997034
 L       k  conf  nMut    r1Low    r1High
 4499980 21 0.950 2997034 0.050636 0.051126
 ```
 
-To compute an r1 confidence interval from an observed Jaccard index:
+To compute an r<sub>1</sub> confidence interval from an observed Jaccard index:
 ```bash 
 $ r1-from-jaccard.py L=4.5M k=21 C=0.95 J=0.20
 L       k  conf  jaccard  r1Low    r1High
 4499980 21 0.950 0.200000 0.050725 0.051215
 ```
 
-To compute an r1 confidence interval from an observed minhash Jaccard estimate
+To compute an r<sub>1</sub> confidence interval from an observed minhash Jaccard estimate
 in the sketching mutation model:
 ```bash 
 $ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
@@ -68,9 +69,16 @@ L       k  s    conf  jHat     slices r1Low    r1High
 ```
 
 ### How to choose L and other parameters
-In reality, you may not know L. In such cases, we recommend that you estimate it from what you know. For example, if what you know is that the number of distinct (i.e. counting duplicates only once) k-mers in A is nA and in B is nB, then you can set L = (nA + nB) / 2. You can also try setting L = min(nA, nB) or L = max(nA, nB).   
+In reality, you may not know L. In such cases, we recommend that you estimate
+it from what you know. For example, if what you know is that the number of
+distinct (i.e. counting duplicates only once) k-mers in A is nA and in B is nB,
+then you can set L = (nA + nB) / 2. You can also try setting L = min(nA, nB) or
+L = max(nA, nB).   
 
-You may also want to get a confidence interval on r1 from the number of mutated k-mers N, but you might only known the number of shared k-mers, i.e. the number of k-mers in both A and B. If this number is n, then you can set N = L - n
+You may also want to get a confidence interval on r<sub>1</sub> from the number
+of mutated k-mers N, but you might only known the number of shared k-mers, i.e.
+the number of k-mers in both A and B. If this number is n, then you can set
+N = L - n
 
 ### Prerequisites
 
@@ -93,7 +101,7 @@ mmh3 is a wrapper for MurmurHash3, used here for hashing kmers for bottom
 sketches. If the module is not present the hashing options in
 simulate_nucleotide_errors are not available.
 
-### Repo sorganization 
+### Repo organization 
 
 The package has six parts:
 * Six command-line programs to compute theoretical hypothesis tests or confidence intervals:
@@ -106,7 +114,7 @@ and r1-from-minhash-jaccard.py,
 * A module to compute the theoretical confidence intervals for the sketching
 mutation model described as theorem 6 in the manuscript:
 hypergeometric_slicer.py.
-* A module to compute the theoretical confidence intervals for r1 from an
+* A module to compute the theoretical confidence intervals for r<sub>1</sub> from an
 observation of Nmut described as theorem 5 in the manuscript:
 kmer_mutation_formulas_v1.py.
 * Two programs to generate simulations: simulate_unit_errors.py and

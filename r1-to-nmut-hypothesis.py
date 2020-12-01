@@ -11,15 +11,15 @@ Compute hypothesis test for the number of mutated k-mers, given the mutation
 rate r1.
 
 usage: r1-to-nmut-hypothesis.py [options]
-  --r1=<list>                 (R1=) (cumulative) mutation rate; <list> is a
-                              comma-separated list of probabilities
-  --length=<N>                (L=) sequence length (number of NUCLEOTIDES in
-                              the sequence)
-                              (default is 1K)
-  --k=<N>                     (K=) kmer size
-                              (default is 21)
-  --confidence=<probability>  (C=) size of confidence interval
-                              (default is 95%)"""
+  --r1=<list>                   (R1=) (cumulative) mutation rate; <list> is a
+                                comma-separated list of probabilities
+  --length=<N>                  (L=) sequence length (number of NUCLEOTIDES in
+                                the sequence)
+                                (default is 1K)
+  --k=<N>                       (K=) kmer size
+                                (default is 21)
+  --significance=<probability>  (C=) significance level
+                                (default is 95%)"""
 
 	if (s == None): exit (message)
 	else:           exit ("%s\n%s" % (s,message))
@@ -45,7 +45,7 @@ def main():
 			ntSequenceLength = int_with_unit(argVal)
 		elif (arg.startswith("--kmer=")) or (arg.upper().startswith("K=")):
 			kmerSize = int(argVal)
-		elif (arg.startswith("--confidence=")) or (arg.startswith("C=")):
+		elif (arg.startswith("--significance=")) or (arg.startswith("C=")):
 			confidence = parse_probability(argVal)
 		elif (arg.startswith("--")):
 			usage("unrecognized option: %s" % arg)
@@ -55,14 +55,14 @@ def main():
 	if (r1Values == []):
 		usage("you have to give me at least one r1 probability")
 
-	# compute the confidence interval(s)
+	# compute the interval(s)
 
 	L = ntSequenceLength - (kmerSize-1)
 	k = kmerSize
 	alpha = 1 - confidence
 	z = v1.probit(1-alpha/2)
 
-	print("\t".join(["L","k","conf","r1","nMutLow","nMutHigh"]))
+	print("\t".join(["L","k","sig","r1","nMutLow","nMutHigh"]))
 	for r1 in r1Values:
 		q = v1.r1_to_q(k,r1)
 		nMutLow  = max(0,floor(v1.n_low (L,k,q,z)))
