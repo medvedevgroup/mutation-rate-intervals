@@ -78,7 +78,10 @@ L = max(nA, nB).
 You may also want to get a confidence interval on r<sub>1</sub> from the number
 of mutated k-mers N, but you might only known the number of shared k-mers, i.e.
 the number of k-mers in both A and B. If this number is n, then you can set
-N = L - n
+N = L - n.
+
+Note that the programs consider L (uppercase) as the number of kmers in the
+sequence, and l (lowercase) as the number of nucleotides, with l = L + k-1.
 
 ### Prerequisites
 
