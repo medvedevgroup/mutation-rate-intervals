@@ -67,12 +67,10 @@ L       k  s    conf  jHat     slices r1Low    r1High
 4499980 21 5000 0.950 0.200000 100    0.048886 0.053160
 ```
 
-### How to choose parameters
+### How to choose L and other parameters
+In reality, you may not know L. In such cases, we recommend that you estimate it from what you know. For example, if what you know is that the number of distinct (i.e. counting duplicates only once) k-mers in A is nA and in B is nB, then you can set L = (nA + nB) / 2. You can also try setting L = min(nA, nB) or L = max(nA, nB).   
 
-The model assumes that k is large enough so that the effect of repetitive k-mers is negligible and that there are only point mutations (see paper for details). In this situation, L is the sequence length and N is the number of k-mers of A that are not in B (in this model, this is the same as the number of k-mers of B that are not in A).
-In reality, these assumptions may be violated. 
-How to handle it depends on the use cases, as follows:
-TODO
+You may also want to get a confidence interval on r1 from the number of mutated k-mers N, but you might only known the number of shared k-mers, i.e. the number of k-mers in both A and B. If this number is n, then you can set N = L - n
 
 ### Prerequisites
 
@@ -95,7 +93,7 @@ mmh3 is a wrapper for MurmurHash3, used here for hashing kmers for bottom
 sketches. If the module is not present the hashing options in
 simulate_nucleotide_errors are not available.
 
-### Usage Overview
+### Repo sorganization 
 
 The package has six parts:
 * Six command-line programs to compute theoretical hypothesis tests or confidence intervals:
@@ -123,5 +121,6 @@ Above we describe only the confidence interval command-line programs. The
 simulation and evaluation programs are described in the reproducibility folder.
 
 ### Citation
+If using this software, please cite
 * Antonio Blanca, Robert S. Harris, David Koslicki and Paul Medvedev, "The statistics of k-mers from a sequence undergoing a simple mutation process without spurious matches", submitted 
 
