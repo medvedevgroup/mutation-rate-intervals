@@ -30,10 +30,10 @@ def main():
 
 	# parse the command line
 
-	r1Values          = []
-	ntSequenceLength  = 1*1000
-	kmerSize          = 21
-	confidence        = 0.95
+	r1Values         = []
+	ntSequenceLength = 1*1000
+	kmerSize         = 21
+	confidence       = 0.95
 
 	for arg in argv[1:]:
 		if ("=" in arg):

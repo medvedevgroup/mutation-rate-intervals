@@ -5,12 +5,12 @@ variables under a simple nucleotide mutation process. In this model, a sequence
 B evolves from a sequence A by independently mutating every nucleotide with
 probability r<sub>1</sub>. We then observe a variable X which may be one of the
 following:
-* the number of mutated k-mers
-* the Jaccard between A and B
-* the minsketch Jaccard estimate between A and B
+* The number of mutated k-mers
+* The Jaccard between A and B
+* The minsketch Jaccard estimate between A and B
 
 The software can be used to compute the following:
-* given a mutation rate r<sub>1</sub> and a desired significance level C (e.g. 95%), an interval such that the observed X lies in it with probability C 
+* Given a mutation rate r<sub>1</sub> and a desired significance level C (e.g. 95%), an interval such that the observed X lies in it with probability C 
 (i.e. a hypothesis test for X)
 * Given the observed value of X and a desired confidence C (e.g. 95%), an interval such that the mutation rate r<sub>1</sub> lies in it with probability C 
 (i.e. a confidence interval for r<sub>1</sub>).
@@ -40,7 +40,7 @@ L       k  sig   r1       jLow     jHigh
 
 To compute a hypothesis test for the observed minhash Jaccard estimate:
 ```bash 
-$ r1-to-minhash-jaccard-hypothesis.py L=4.5M k=21 S=5K C=0.95 m=100 r1=.05
+$ r1-to-minhash-jaccard-hypothesis.py L=4.5M k=21 S=5K C=0.95 r1=.05
 L       k  s    sig   slices r1       jHatLow  jHatHigh
 4499980 21 5000 0.950 100    0.050000 0.194000 0.216800
 ```
@@ -62,7 +62,7 @@ L       k  conf  jaccard  r1Low    r1High
 To compute an r<sub>1</sub> confidence interval from an observed minhash Jaccard estimate
 in the sketching mutation model:
 ```bash 
-$ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 m=100 J=0.20
+$ r1-from-minhash-jaccard.py L=4.5M k=21 S=5K C=0.95 J=0.20
 # (may take about a minute)
 L       k  s    conf  jHat     slices r1Low    r1High
 4499980 21 5000 0.950 0.200000 100    0.048886 0.053160
