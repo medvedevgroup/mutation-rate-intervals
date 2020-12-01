@@ -3,21 +3,22 @@
 This software calculates confidence intervals and hypothesis tests for various
 variables under a simple nucleotide mutation process. In this model, a sequence
 B evolves from a sequence A by independently mutating every nucleotide with
-probability r1. What is observed may be
+probability r1. We then observe a variable X which may be one of the following:
 * the number of mutated k-mers
 * the Jaccard between A and B
 * the minsketch Jaccard estimate between A and B
 
-In particular, the software can be used to compute the following:
-* given a mutation rate r1, and a variable X (e.g. the number of mutated k-mers, the Jaccard similarity, or the minhash Jaccard estimate),
-an interval such that the observed X lies in it with a given probability (e.g. 95%) (this is a hypothesis test for X)
-* Given the observed value of X, an interval such that the mutation rate r1 lies in it with a given probability (e.g. 95%) (this is a confidence interval for r1).
+The software can be used to compute the following:
+* given a mutation rate r1 and a desired significance level C (e.g. 95%), an interval such that the observed X lies in it with probability C 
+(i.e. a hypothesis test for X)
+* Given the observed value of X and a desired confidence C (e.g. 95%), an interval such that the mutation rate r1 lies in it with probability C 
+(i.e. a confidence interval for r1).
 
 The two most common cases where this is applicable are
 * There are two sequences that have evolved from a common ancestor and we
-  observe their Jaccard similarity. What was the mutation rate r1?
-* There is a read r generated with a known error rate r1. We would like to know
-  if r was generated from a sequence s based on the observed Jaccard between
+  observe X. What was the mutation rate r1?
+* There is a read R generated with a known error rate r1. We would like to know
+  if R was generated from a sequence s based on the observed X between
   them.
 
 ### Quick start
