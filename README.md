@@ -40,7 +40,9 @@ L       k  conf  r1       jLow     jHigh
 
 To compute a hypothesis test for the observed minhash Jaccard estimate:
 ```bash 
-TBD
+$ r1-to-minhash-jaccard-hypothesis.py L=4.5M k=21 S=5K C=0.95 m=100 r1=.05
+L       k  s    conf  slices r1       jHatLow  jHatHigh
+4499980 21 5000 0.950 100    0.050000 0.194000 0.216800
 ```
 
 To compute an r1 confidence interval from an observed number of mutated k-mers:
