@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from sys  import argv,stdin,stdout,stderr,exit
-from math import ceil
+from math import ceil,log10
 import hypergeometric_slicer as hgslicer
+import mutation_model_simulator as mms
 
 
 def usage(s=None):
@@ -26,14 +27,20 @@ usage: r1-to-minhash-jaccard-hypothesis.py [options]
   --significance=<probability>  (C=) significance level
                                 (default is 95%)
   --slices=<N>                  (m=) number of slices
-                                (default is 100)"""
+                                (default is 100)
+  --validate[=<N>]              (V=) run simulations to validate the interval;
+                                N is the number of simulation trials; if N is
+                                not provided, 10,000 simulations are run
+                                (by default, no simulation is performed)
+  --seed=<string>               random seed for simulations
+  --progress=<number>           periodically report how many simulations we've
+                                performed"""
 
 	if (s == None): exit (message)
 	else:           exit ("%s\n%s" % (s,message))
 
 
 def main():
-	global reportProgress,debug
 
 	# parse the command line
 
@@ -44,6 +51,9 @@ def main():
 	sketchSize         = None
 	confidence         = 0.95
 	numSlices          = 100
+	numSimulations     = None
+	prngSeed           = None
+	reportProgress     = None
 
 	for arg in argv[1:]:
 		if ("=" in arg):
@@ -63,6 +73,12 @@ def main():
 			confidence = parse_probability(argVal)
 		elif (arg.startswith("--slices=")) or (arg.lower().startswith("m=")): \
 			numSlices = int(argVal)
+		elif (arg.startswith("--validate=")) or (arg.startswith("V=")):
+			numSimulations = int_with_unit(argVal)
+		elif (arg.startswith("--seed=")):
+			prngSeed = argVal
+		elif (arg.startswith("--progress=")):
+			reportProgress = int_with_unit(argVal)
 		elif (arg.startswith("--")):
 			usage("unrecognized option: %s" % arg)
 		else:
@@ -73,6 +89,9 @@ def main():
 
 	if (sketchSize == None):
 		usage("you have to tell me the sketch size")
+
+	if (prngSeed != None) and (numSimulations == None):
+		print("WARNING, seed is ignored since --validate was not enabled",file=stderr)
 
 	if (ntSequenceLength != None) and (kmerSequenceLength != None):
 		if (kmerSequenceLength != ntSequenceLength + kmerSize-1):
@@ -90,10 +109,24 @@ def main():
 	alpha = 1 - confidence
 	m = numSlices
 
-	print("\t".join(["L","k","s","sig","slices","r1","jHatLow","jHatHigh"]))
-	for r1 in r1Values:
+	header = ["L","k","s","sig","slices","r1","jHatLow","jHatHigh"]
+	if (numSimulations != None):
+		header += ["jHat","validate"]
+	print("\t".join(header))
+
+	for (r1Ix,r1) in enumerate(r1Values):
 		(jLow,jHigh) = hgslicer.jaccard_bounds(L,k,r1,s,alpha,m)
-		print("%d\t%d\t%d\t%.3f\t%d\t%.6f\t%.6f\t%.6f" % (L,k,s,confidence,m,r1,jLow,jHigh))
+		line = ["%d\t%d\t%d\t%.3f\t%d\t%.6f\t%.6f\t%.6f" % (L,k,s,confidence,m,r1,jLow,jHigh)]
+		if (numSimulations != None):
+			numDigits = max(2,int(ceil(log10(numSimulations))))
+			jHat = hgslicer.r1_to_jaccard(k,r1)
+			prngSeedForR1 = ("%s_%.9f_%d" % (prngSeed,r1,r1Ix)) if (prngSeed != None) else None
+			successRate = mms.jaccard_simulations(numSimulations,L,k,jHat,[s],jLow,jHigh,
+			                                      prngSeed=prngSeedForR1,
+			                                      reportProgress=reportProgress)
+			line += ["%.6f" % jHat]
+			line += ["%.*f" % (numDigits,successRate[s])]
+		print("\t".join(line))
 
 
 # parse_probability--

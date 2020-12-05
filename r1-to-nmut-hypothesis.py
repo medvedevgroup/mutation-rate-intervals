@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from sys  import argv,stdin,stdout,stderr,exit
-from math import floor,ceil
+from math import floor,ceil,log10
 import kmer_mutation_formulas_v1 as v1
+import mutation_model_simulator as mms
 
 
 def usage(s=None):
@@ -22,14 +23,20 @@ usage: r1-to-nmut-hypothesis.py [options]
   --k=<N>                       (K=) kmer size
                                 (default is 21)
   --significance=<probability>  (C=) significance level
-                                (default is 95%)"""
+                                (default is 95%)
+  --validate[=<N>]              (V=) run simulations to validate the interval;
+                                N is the number of simulation trials; if N is
+                                not provided, 10,000 simulations are run
+                                (by default, no simulation is performed)
+  --seed=<string>               random seed for simulations
+  --progress=<number>           periodically report how many simulations we've
+                                performed"""
 
 	if (s == None): exit (message)
 	else:           exit ("%s\n%s" % (s,message))
 
 
 def main():
-	global reportProgress,debug
 
 	# parse the command line
 
@@ -38,6 +45,9 @@ def main():
 	kmerSequenceLength = None
 	kmerSize           = 21
 	confidence         = 0.95
+	numSimulations     = None
+	prngSeed           = None
+	reportProgress     = None
 
 	for arg in argv[1:]:
 		if ("=" in arg):
@@ -53,6 +63,12 @@ def main():
 			kmerSize = int(argVal)
 		elif (arg.startswith("--significance=")) or (arg.startswith("C=")):
 			confidence = parse_probability(argVal)
+		elif (arg.startswith("--validate=")) or (arg.startswith("V=")):
+			numSimulations = int_with_unit(argVal)
+		elif (arg.startswith("--seed=")):
+			prngSeed = argVal
+		elif (arg.startswith("--progress=")):
+			reportProgress = int_with_unit(argVal)
 		elif (arg.startswith("--")):
 			usage("unrecognized option: %s" % arg)
 		else:
@@ -60,6 +76,9 @@ def main():
 
 	if (r1Values == []):
 		usage("you have to give me at least one r1 probability")
+
+	if (prngSeed != None) and (numSimulations == None):
+		print("WARNING, seed is ignored since --validate was not enabled",file=stderr)
 
 	if (ntSequenceLength != None) and (kmerSequenceLength != None):
 		if (kmerSequenceLength != ntSequenceLength + kmerSize-1):
@@ -76,12 +95,26 @@ def main():
 	alpha = 1 - confidence
 	z = v1.probit(1-alpha/2)
 
-	print("\t".join(["L","k","sig","r1","nMutLow","nMutHigh"]))
-	for r1 in r1Values:
+	header = ["L","k","sig","r1","nMutLow","nMutHigh"]
+	if (numSimulations != None):
+		header += ["nMut","validate"]
+	print("\t".join(header))
+
+	for (r1Ix,r1) in enumerate(r1Values):
 		q = v1.r1_to_q(k,r1)
 		nMutLow  = max(0,floor(v1.n_low (L,k,q,z)))
 		nMutHigh = min(L,ceil (v1.n_high(L,k,q,z)))
-		print("%d\t%d\t%.3f\t%.6f\t%d\t%d" % (L,k,confidence,r1,nMutLow,nMutHigh))
+		line = ["%d\t%d\t%.3f\t%.6f\t%d\t%d" % (L,k,confidence,r1,nMutLow,nMutHigh)]
+		if (numSimulations != None):
+			numDigits = max(2,int(ceil(log10(numSimulations))))
+			nMutHat = int(round(L*q))
+			prngSeedForR1 = ("%s_%.9f_%d" % (prngSeed,r1,r1Ix)) if (prngSeed != None) else None
+			successRate = mms.nmut_simulations(numSimulations,L,k,nMutHat,None,nMutLow,nMutHigh,
+			                                   prngSeed=prngSeedForR1,
+			                                   reportProgress=reportProgress)
+			line += ["%d" % nMutHat]
+			line += ["%.*f" % (numDigits,successRate["no sketch"])]
+		print("\t".join(line))
 
 
 # parse_probability--

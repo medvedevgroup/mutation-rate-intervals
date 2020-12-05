@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Simulate sequence pairs chosen from the unit interval under a mutation model,
-counting the number of mutated kmers.
+Simulate pairs of sequences of values chosen from the unit interval under a
+mutation model, counting the number of mutated kmers.
 
 A 'sequence pair' is a random linear sequence and a mutated version of it. The
 mutated version is consistent with a model where the sequence represents hash
@@ -42,6 +42,7 @@ Example 2:
 
 from sys    import argv,stdin,stdout,stderr,exit
 from random import Random
+import hypergeometric_slicer as hgslicer
 
 try:
 	from numpy.random import RandomState
@@ -172,3 +173,131 @@ def count_mutated_kmers_linear_naive(kmerSize,errorSeq):
 		errorsInKmer = sum(errorSeq[pos:pos+kmerSize])
 		if (errorsInKmer > 0): nMutated += 1       # pos is 'mutated'
 	return nMutated
+
+
+# r1_simulations--
+#	Run several simulations and report how often the observed r1 is within the
+#	specified interval.
+#
+# We return a dictionary that maps sketch size to the corresponding success
+# rate of r1 derived from a simulated sketch. An additional key, "no sketch",
+# maps the success rate of r1 derived from the number of mutated kmers.
+
+def r1_simulations(numSimulations,L,k,r1,sketchSizes,r1Low,r1High,prngSeed=None,reportProgress=None):
+	mutationModel = MutationModel(L,k,r1,sketchSizes=sketchSizes,prngSeed=prngSeed)
+
+	counts = {"no sketch":0}
+	if (sketchSizes != None):
+		for sketchSize in sketchSizes:
+			counts[sketchSize] = 0
+
+	for trialNum in range(numSimulations):
+		if (reportProgress != None):
+			if (1+trialNum == 1) or ((1+trialNum) % reportProgress == 0):
+				print("simulating trial %d" % (1+trialNum),file=stderr)
+
+		mutationModel.generate()
+		(_,nMutated) = mutationModel.count()
+		qObs = nMutated / L
+		r1Obs = hgslicer.q_to_r1(k,qObs)
+		if (r1Low <= r1Obs <= r1High):
+			counts["no sketch"] += 1
+
+		if (sketchSizes != None):
+			for sketchSize in sketchSizes:
+				nIntersection = mutationModel.simulate_sketch(nMutated,sketchSize)
+				jObs = nIntersection / sketchSize
+				r1Obs = hgslicer.jaccard_to_r1(k,jObs)
+				if (r1Low <= r1Obs <= r1High):
+					counts[sketchSize] += 1
+
+	successRate = {}
+	for key in counts:
+		successRate[key] = counts[key]/numSimulations
+	return successRate
+
+
+# nmut_simulations--
+#	Run several simulations and report how often the observed nMut is within
+#	the specified interval.
+#
+# We return a dictionary that maps sketch size to the corresponding success
+# rate of nMut derived from a simulated sketch. An additional key, "no sketch",
+# maps the success rate of nMut derived from the number of mutated kmers.
+
+def nmut_simulations(numSimulations,L,k,nMut,sketchSizes,nMutLow,nMutHigh,prngSeed=None,reportProgress=None):
+	q = nMut / L
+	r1 = hgslicer.q_to_r1(k,q)
+	mutationModel = MutationModel(L,k,r1,sketchSizes=sketchSizes,prngSeed=prngSeed)
+
+	counts = {"no sketch":0}
+	if (sketchSizes != None):
+		for sketchSize in sketchSizes:
+			counts[sketchSize] = 0
+
+	for trialNum in range(numSimulations):
+		if (reportProgress != None):
+			if (1+trialNum == 1) or ((1+trialNum) % reportProgress == 0):
+				print("simulating trial %d" % (1+trialNum),file=stderr)
+
+		mutationModel.generate()
+		(_,nMutated) = mutationModel.count()
+		if (nMutLow <= nMutated <= nMutHigh):
+			counts["no sketch"] += 1
+
+		if (sketchSizes != None):
+			for sketchSize in sketchSizes:
+				nIntersection = mutationModel.simulate_sketch(nMutated,sketchSize)
+				jObs = nIntersection / sketchSize
+				nMutObs = L * hgslicer.jaccard_to_q(k,jObs)
+				if (nMutLow <= nMutObs <= nMutHigh):
+					counts[sketchSize] += 1
+
+	successRate = {}
+	for key in counts:
+		successRate[key] = counts[key]/numSimulations
+	return successRate
+
+
+# jaccard_simulations--
+#	Run several simulations and report how often the observed jaccard is within
+#	the specified interval.
+#
+# We return a dictionary that maps sketch size to the corresponding success
+# rate of jaccard derived from a simulated sketch. An additional key, "no
+# sketch", maps the success rate of jaccard derived from the number of mutated
+# kmers.
+
+def jaccard_simulations(numSimulations,L,k,jaccard,sketchSizes,jLow,jHigh,prngSeed=None,reportProgress=None):
+	r1 = hgslicer.jaccard_to_r1(k,jaccard)
+	mutationModel = MutationModel(L,k,r1,sketchSizes=sketchSizes,prngSeed=prngSeed)
+
+	counts = {"no sketch":0}
+	if (sketchSizes != None):
+		for sketchSize in sketchSizes:
+			counts[sketchSize] = 0
+
+	for trialNum in range(numSimulations):
+		if (reportProgress != None):
+			if (1+trialNum == 1) or ((1+trialNum) % reportProgress == 0):
+				print("simulating trial %d" % (1+trialNum),file=stderr)
+
+		mutationModel.generate()
+		(_,nMutated) = mutationModel.count()
+		qObs = nMutated / L
+		jObs = hgslicer.q_to_jaccard(qObs)
+		if (jLow <= jObs <= jHigh):
+			counts["no sketch"] += 1
+
+		if (sketchSizes != None):
+			for sketchSize in sketchSizes:
+				nIntersection = mutationModel.simulate_sketch(nMutated,sketchSize)
+				jObs = nIntersection / sketchSize
+				if (jLow <= jObs <= jHigh):
+					counts[sketchSize] += 1
+
+	successRate = {}
+	for key in counts:
+		successRate[key] = counts[key]/numSimulations
+	return successRate
+
