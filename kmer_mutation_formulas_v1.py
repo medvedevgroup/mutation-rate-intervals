@@ -199,6 +199,25 @@ def n_high(L,k,q,z):
 	varN = var_n_mutated(L,k,r1)
 	return L*q + z*sqrt(varN)
 
+# derivative of n_low and n_high w.r.t. r1
+
+def n_low_derivative(L,k,q,alpha):
+	r1 = q_to_r1(k,q)
+	derivativeMiddle = (k*L*(1-q))/(1-r1)
+	derivativeOffset = \
+	    ((1-q)*(4*q-r1*(6-2*k-2*r1+2*k*r1+L*(2-2*r1+2*k*r1-k*r1**2)+2*(1-q)*(-3+3*k-L+(-1+2*k)*(-1+k-L)*r1+k*(k*(-1+k-2*L)+L)*r1**2)))) \
+	     / (sqrt(2)*(1-r1)*r1**2*sqrt((1-q)*(-2+2*r1+2*L*r1-L*r1**2+(1-q)*(2+r1*(2*k-2*(1+L)+(k*(-1+k-2*L)+L)*r1)))))
+	return derivativeMiddle - inverse_erf(1-alpha)*derivativeOffset
+
+
+def n_high_derivative(L,k,q,alpha):
+	r1 = q_to_r1(k,q)
+	derivativeMiddle = (k*L*(1-q))/(1-r1)
+	derivativeOffset = \
+	    ((1-q)*(4*q-r1*(6-2*k-2*r1+2*k*r1+L*(2-2*r1+2*k*r1-k*r1**2)+2*(1-q)*(-3+3*k-L+(-1+2*k)*(-1+k-L)*r1+k*(k*(-1+k-2*L)+L)*r1**2)))) \
+	     / (sqrt(2)*(1-r1)*r1**2*sqrt((1-q)*(-2+2*r1+2*L*r1-L*r1**2+(1-q)*(2+r1*(2*k-2*(1+L)+(k*(-1+k-2*L)+L)*r1)))))
+	return derivativeMiddle + inverse_erf(1-alpha)*derivativeOffset
+
 #==========
 # formulas for Nisland
 #==========
@@ -297,4 +316,7 @@ def confidence_interval(L,q,varN,z):
 
 def probit(p):
 	return scipy_norm.ppf(p)
+
+def inverse_erf(alpha):
+	return scipy_norm.ppf((1+alpha)/2.0) / sqrt(2)
 
