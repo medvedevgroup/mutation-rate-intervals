@@ -165,7 +165,7 @@ def q_for_n_mutated_high(L,k,nMut,z,checkDerivative=True):
 		#print (("for nHigh(q)=%s (for L=%d k=%d) d(nHigh)/dr at q=%.9f is %9f") \
 		#     % (nMut,L,k,qSoln,dNHigh),file=stderr)
 		assert (dNHigh > 0.0), \
-		       ("solution of q nHigh(q)=%s (for L=%d k=%d) fails derivative test" 
+		       ("solution of nHigh(q)=%s (for L=%d k=%d) fails derivative test" 
 		      + "\nd(nHigh)/dr at q=%.9f is %9f") \
 		     % (nMut,L,k,qSoln,dNHigh)
 
