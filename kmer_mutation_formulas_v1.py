@@ -135,7 +135,7 @@ def in_confidence_interval_q_from_n_mutated(L,k,r1,alpha,nMutatedObserved,useInv
 # nMut==L is another special case. There are two solutions in this case, one
 # of which is q=1. We are interested in the other solutions
 
-def q_for_n_mutated_high(L,k,nMut,z):
+def q_for_n_mutated_high(L,k,nMut,z,checkDerivative=True):
 	if (nMut == 0): return 0.0   # special case, see note above
 	qRight = 1 if (nMut<L) else 1-1e-5
 	qLeft = 1e-5
@@ -157,13 +157,25 @@ def q_for_n_mutated_high(L,k,nMut,z):
 	# so we can use the Brent's method to find the solution in the bracketed
 	# interval
 	func = lambda q: n_high(L,k,q,z)-nMut
-	return brentq(func,qLeft,qRight)
+	qSoln = brentq(func,qLeft,qRight)
+
+	if (checkDerivative):
+		alpha = 2*(1-inverse_probit(z))    # because z = probit(1-alpha/2)
+		dNHigh = n_high_derivative(L,k,qSoln,alpha)
+		#print (("for nHigh(q)=%s (for L=%d k=%d) d(nHigh)/dr at q=%.9f is %9f") \
+		#     % (nMut,L,k,qSoln,dNHigh),file=stderr)
+		assert (dNHigh > 0.0), \
+		       ("solution of q nHigh(q)=%s (for L=%d k=%d) fails derivative test" 
+		      + "\nd(nHigh)/dr at q=%.9f is %9f") \
+		     % (nMut,L,k,qSoln,dNHigh)
+
+	return qSoln
 
 
 # q_for_n_mutated_low--
 #	find q s.t. nLow(q) == nMut
 
-def q_for_n_mutated_low(L,k,nMut,z):
+def q_for_n_mutated_low(L,k,nMut,z,checkDerivative=True):
 	qRight = 1
 	qLeft = 1e-5
 	attemptsLeft = 10
@@ -184,7 +196,19 @@ def q_for_n_mutated_low(L,k,nMut,z):
 	# so we can use the Brent's method to find the solution in the bracketed
 	# interval
 	func = lambda q: n_low(L,k,q,z)-nMut
-	return brentq(func,qLeft,qRight)
+	qSoln = brentq(func,qLeft,qRight)
+
+	if (checkDerivative):
+		alpha = 2*(1-inverse_probit(z))    # because z = probit(1-alpha/2)
+		dNLow = n_low_derivative(L,k,qSoln,alpha)
+		#print (("for nLow(q)=%s (for L=%d k=%d) d(nLow)/dr at q=%.9f is %9f") \
+		#     % (nMut,L,k,qSoln,dNLow),file=stderr)
+		assert (dNLow > 0.0), \
+		       ("solution of nLow(q)=%s (for L=%d k=%d) fails derivative test" 
+		      + "\nd(nLow)/dr at q=%.9f is %9f") \
+		     % (nMut,L,k,qSoln,dNLow)
+
+	return qSoln
 
 
 # confidence interval for Nmutated
@@ -316,6 +340,9 @@ def confidence_interval(L,q,varN,z):
 
 def probit(p):
 	return scipy_norm.ppf(p)
+
+def inverse_probit(z):
+	return scipy_norm.cdf(z)
 
 def inverse_erf(alpha):
 	return scipy_norm.ppf((1+alpha)/2.0) / sqrt(2)
