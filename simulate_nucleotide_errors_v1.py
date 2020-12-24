@@ -467,6 +467,7 @@ def sample_mean(observed):
 def sample_variance(observed):
 	if (len(observed) <= 1): return 0.0
 	m = sample_mean(observed)
+	assert (False), "this formula is wrong"
 	return (float(sum([n**2 for n in observed])) / (len(observed)-1)) - m**2
 
 def mean_squared_error(observed,predicted):
