@@ -227,20 +227,41 @@ def n_high(L,k,q,z):
 
 def n_low_derivative(L,k,q,alpha):
 	r1 = q_to_r1(k,q)
+	z = probit(1-alpha/2)
 	derivativeMiddle = (k*L*(1-q))/(1-r1)
 	derivativeOffset = \
-	    ((1-q)*(4*q-r1*(6-2*k-2*r1+2*k*r1+L*(2-2*r1+2*k*r1-k*r1**2)+2*(1-q)*(-3+3*k-L+(-1+2*k)*(-1+k-L)*r1+k*(k*(-1+k-2*L)+L)*r1**2)))) \
-	     / (sqrt(2)*(1-r1)*r1**2*sqrt((1-q)*(-2+2*r1+2*L*r1-L*r1**2+(1-q)*(2+r1*(2*k-2*(1+L)+(k*(-1+k-2*L)+L)*r1)))))
-	return derivativeMiddle - inverse_erf(1-alpha)*derivativeOffset
+	    ((1-q)*(4*q+r1*(-6+2*k+2*r1-2*k*r1+L*(-2-2*(-1+k)*r1+k*r1**2)+2*(1-q)*(3-3*k*(1-r1)-r1-k**3*r1**2+k**2*(-2*r1+r1**2)+L*(1-r1+k*(2-r1)*r1+2*k**2*r1**2))))) \
+	     / (2*(1-r1)*r1**2*sqrt((1-q)*(-2*(1-r1)+L*(2-r1)*r1)+(1-q)**2*(2*(1-r1)+k*(2-r1)*r1+k**2*r1**2+L*(-2*r1+r1**2-2*k*r1**2))))
+	return derivativeMiddle - z*derivativeOffset
 
 
 def n_high_derivative(L,k,q,alpha):
 	r1 = q_to_r1(k,q)
+	z = probit(1-alpha/2)
 	derivativeMiddle = (k*L*(1-q))/(1-r1)
 	derivativeOffset = \
-	    ((1-q)*(4*q-r1*(6-2*k-2*r1+2*k*r1+L*(2-2*r1+2*k*r1-k*r1**2)+2*(1-q)*(-3+3*k-L+(-1+2*k)*(-1+k-L)*r1+k*(k*(-1+k-2*L)+L)*r1**2)))) \
-	     / (sqrt(2)*(1-r1)*r1**2*sqrt((1-q)*(-2+2*r1+2*L*r1-L*r1**2+(1-q)*(2+r1*(2*k-2*(1+L)+(k*(-1+k-2*L)+L)*r1)))))
-	return derivativeMiddle + inverse_erf(1-alpha)*derivativeOffset
+	    ((1-q)*(4*q+r1*(-6+2*k+2*r1-2*k*r1+L*(-2-2*(-1+k)*r1+k*r1**2)+2*(1-q)*(3-3*k*(1-r1)-r1-k**3*r1**2+k**2*(-2*r1+r1**2)+L*(1-r1+k*(2-r1)*r1+2*k**2*r1**2))))) \
+	     / (2*(1-r1)*r1**2*sqrt((1-q)*(-2*(1-r1)+L*(2-r1)*r1)+(1-q)**2*(2*(1-r1)+k*(2-r1)*r1+k**2*r1**2+L*(-2*r1+r1**2-2*k*r1**2))))
+	return derivativeMiddle + z*derivativeOffset
+
+
+# same derivative, just a different formula
+#def n_low_derivative_old(L,k,q,alpha):
+#	r1 = q_to_r1(k,q)
+#	derivativeMiddle = (k*L*(1-q))/(1-r1)
+#	derivativeOffset = \
+#	    ((1-q)*(4*q-r1*(6-2*k-2*r1+2*k*r1+L*(2-2*r1+2*k*r1-k*r1**2)+2*(1-q)*(-3+3*k-L+(-1+2*k)*(-1+k-L)*r1+k*(k*(-1+k-2*L)+L)*r1**2)))) \
+#	     / (sqrt(2)*(1-r1)*r1**2*sqrt((1-q)*(-2+2*r1+2*L*r1-L*r1**2+(1-q)*(2+r1*(2*k-2*(1+L)+(k*(-1+k-2*L)+L)*r1)))))
+#	return derivativeMiddle - inverse_erf(1-alpha)*derivativeOffset
+#
+#
+#def n_high_derivative_old(L,k,q,alpha):
+#	r1 = q_to_r1(k,q)
+#	derivativeMiddle = (k*L*(1-q))/(1-r1)
+#	derivativeOffset = \
+#	    ((1-q)*(4*q-r1*(6-2*k-2*r1+2*k*r1+L*(2-2*r1+2*k*r1-k*r1**2)+2*(1-q)*(-3+3*k-L+(-1+2*k)*(-1+k-L)*r1+k*(k*(-1+k-2*L)+L)*r1**2)))) \
+#	     / (sqrt(2)*(1-r1)*r1**2*sqrt((1-q)*(-2+2*r1+2*L*r1-L*r1**2+(1-q)*(2+r1*(2*k-2*(1+L)+(k*(-1+k-2*L)+L)*r1)))))
+#	return derivativeMiddle + inverse_erf(1-alpha)*derivativeOffset
 
 #==========
 # formulas for Nisland
