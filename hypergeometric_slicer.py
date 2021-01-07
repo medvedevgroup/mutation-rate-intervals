@@ -193,8 +193,6 @@ def beta_low(L,k,q,s,m,a):
 		if (cacheKey in beta_low_cache):
 			return beta_low_cache[cacheKey]
 
-	episilon = 0.0  # placeholder for an error term we're ignoring
-
 	hadAClippedLow = hadAClippedHigh = False
 	betaLow = 0.0
 	for i in range(1,m+1):
@@ -214,7 +212,7 @@ def beta_low(L,k,q,s,m,a):
 		if (highIsClipped): 
 			hadAClippedHigh = True
 
-	betaLow /= (2*m + 2*episilon)
+	betaLow /= 2*m
 
 	if (useCache):
 		beta_low_cache[cacheKey] = betaLow
@@ -229,8 +227,6 @@ def beta_high(L,k,q,s,m,a):
 		cacheKey = (L,k,q,s,m,a)
 		if (cacheKey in beta_high_cache):
 			return beta_high_cache[cacheKey]
-
-	episilon = 0.0  # placeholder for an error term we're ignoring
 
 	hadAClippedLow = hadAClippedHigh = False
 	betaHigh = 0.0
@@ -251,7 +247,7 @@ def beta_high(L,k,q,s,m,a):
 		if (highIsClipped): 
 			hadAClippedHigh = True
 
-	betaHigh /= (2*m - 2*episilon)
+	betaHigh /= 2*m
 
 	if (useCache):
 		beta_high_cache[cacheKey] = betaHigh
