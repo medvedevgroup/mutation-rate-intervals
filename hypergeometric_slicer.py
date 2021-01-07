@@ -267,7 +267,7 @@ def a_min(L,k,q,s,alpha,m):
 			return a_min_cache[cacheKey]
 
 	aMin = a_min_search(L,k,q,s,alpha,m)
-	if (aMin == None): aMin = s  # (no suitable a was found)
+		aMax = s if (q < .5) else 0  # (no suitable a was found)
 
 	if (useCache):
 		a_min_cache[cacheKey] = aMin
@@ -320,7 +320,8 @@ def a_max(L,k,q,s,alpha,m):
 			return a_max_cache[cacheKey]
 
 	aMax = a_max_search(L,k,q,s,alpha,m)
-	if (aMax == None): aMax = 0  # (no suitable a was found)
+	if (aMax == None):
+		aMax = s if (q < .5) else 0  # (no suitable a was found)
 
 	if (useCache):
 		a_max_cache[cacheKey] = aMax
