@@ -53,7 +53,7 @@ showQRightSearch = False
 
 zeta_cache = {}
 def zeta(L,s,Nmutated,a):
-	# zeta(n,a)=Pr[Z>=a|N=Nmutated]
+	# zeta(L,s,Nmut,a)=P[H(L+Nmut,L-Nmut,s) >= a]
 	# i.e. the tail of a hypergeometric distribution
 	# in the manuscript, zeta is F
 	#
