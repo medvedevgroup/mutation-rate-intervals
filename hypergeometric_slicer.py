@@ -49,6 +49,7 @@ useNHighSanityCheck = True
 showQLeftSearch = False
 showQRightSearch = False
 #showZetaCalls = False
+doMonotonicityCheck = False
 
 
 zeta_cache = {}
@@ -435,6 +436,9 @@ def q_confidence_interval(L,k,s,alpha,m,jHat,epsilon=1e-6):
 		if (cacheKey in q_confidence_interval_cache):
 			return q_confidence_interval_cache[cacheKey]
 
+	if (doMonotonicityCheck):
+		j_low_high_monotonicity_check(L,k,s,alpha,m)
+
 	qLeft  = q_left_search (L,k,s,alpha,m,jHat,epsilon=epsilon/2)
 	qRight = q_right_search(L,k,s,alpha,m,jHat,epsilon=epsilon/2)
 
@@ -511,6 +515,42 @@ def q_right_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 			qLo = qMid           # j_high(new qLo) >= jHat
 
 	return qLo
+
+
+def j_low_high_monotonicity_check(L,k,s,alpha,m):
+	# empirically 'validate' the following:
+	#   - jLow(q)  is non-increasing as q increases from 0 to 1
+	#   - jHigh(q) is non-increasing as q increases from 0 to 1
+
+	# WARNING: THIS TEST HAS NOT BEEN TESTED NOR DEBUGGED, ONLY CODED
+
+	prevJLow = prevJHigh = prevQ = None
+
+	qStart = .01
+	qEnd   = 1-qStart
+	qStep  = .01
+
+	q = qStart
+	while (q <= qEnd):
+		jLow  = j_low (L,k,q,s,alpha,m)
+		jHigh = j_high(L,k,q,s,alpha,m)
+		if (prevJLow != None):
+			assert (jLow <= prevJLow), \
+			       "jLow(%d,%d,%.9f,%d,%.3f,%d) = %.9f <  %.9f = jLow(%d,%d,%.9f,%d,%.3f,%d) violates monotonicity" \
+			     % (L,k,prevQ,s,alpha,m,
+			        jLow,prevJLow,
+			        L,k,q,s,alpha,m)  
+		if (prevJHigh != None):
+			assert (jHigh <= prevJHigh), \
+			       "jHigh(%d,%d,%.9f,%d,%.3f,%d) = %.9f <  %.9f = jHigh(%d,%d,%.9f,%d,%.3f,%d) violates monotonicity" \
+			     % (L,k,prevQ,s,alpha,m,
+			        jHigh,prevJHigh,
+			        L,k,q,s,alpha,m)  
+
+		prevJLow  = jLow
+		prevJHigh = jHigh
+		prevQ = q
+		q += qStep
 
 #==========
 # formulas for Nmutated

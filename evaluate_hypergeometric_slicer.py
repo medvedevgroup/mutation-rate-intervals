@@ -2,6 +2,7 @@
 
 from sys  import argv,stdin,stdout,stderr,exit
 from gzip import open as gzip_open
+# import hypergeometric_slicer as hgslicer; delay that until we know what version we want to import
 
 
 def usage(s=None):
@@ -109,6 +110,9 @@ def main():
 
 	if ("showzeta" in debug):
 		hgslicer.showZetaCalls = True
+
+	if ("monotonicity" in debug):
+		hgslicer.doMonotonicityCheck = True
 
 	slicerName = hgslicer.moduleName
 	if ("noshortcut" in debug): slicerName += ",noshortcut"
