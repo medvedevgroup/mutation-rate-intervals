@@ -267,6 +267,7 @@ def a_min(L,k,q,s,alpha,m):
 			return a_min_cache[cacheKey]
 
 	aMin = a_min_search(L,k,q,s,alpha,m)
+	if (aMax == None):
 		aMax = s if (q < .5) else 0  # (no suitable a was found)
 
 	if (useCache):
