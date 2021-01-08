@@ -186,7 +186,7 @@ def precompute_n_high_low(L,k,q,m):
 
 beta_low_cache = {}
 def beta_low(L,k,q,s,m,a):
-	# in the manuscript, beta is B
+	# in the manuscript, beta_low(a) is the lower bound of B(a)
 	assert (m>=2)
 	if (useCache):
 		cacheKey = (L,k,q,s,m,a)
@@ -212,8 +212,6 @@ def beta_low(L,k,q,s,m,a):
 		if (highIsClipped): 
 			hadAClippedHigh = True
 
-	betaLow /= 2*m
-
 	if (useCache):
 		beta_low_cache[cacheKey] = betaLow
 	return betaLow
@@ -221,7 +219,7 @@ def beta_low(L,k,q,s,m,a):
 
 beta_high_cache = {}
 def beta_high(L,k,q,s,m,a):
-	# in the manuscript, beta is B
+	# in the manuscript, beta_high(a) is the upper bound of B(a)
 	assert (m>=2)
 	if (useCache):
 		cacheKey = (L,k,q,s,m,a)
@@ -247,8 +245,6 @@ def beta_high(L,k,q,s,m,a):
 		if (highIsClipped): 
 			hadAClippedHigh = True
 
-	betaHigh /= 2*m
-
 	if (useCache):
 		beta_high_cache[cacheKey] = betaHigh
 	return betaHigh
@@ -256,7 +252,7 @@ def beta_high(L,k,q,s,m,a):
 
 a_min_cache = {}
 def a_min(L,k,q,s,alpha,m):
-	# aMin = max{a : a/2 > 1-betaHigh(a)}
+	# aMax = min{a : a/2 > betaLow(a)}
 	assert (0<alpha<1)
 	assert (m>=2)
 	assert (s>=1)
@@ -266,85 +262,30 @@ def a_min(L,k,q,s,alpha,m):
 		if (cacheKey in a_min_cache):
 			return a_min_cache[cacheKey]
 
-	aMin = a_min_search(L,k,q,s,alpha,m)
+	aMax = a_min_search(L,k,q,s,alpha,m)
 	if (aMax == None):
 		aMax = s if (q < .5) else 0  # (no suitable a was found)
 
 	if (useCache):
-		a_min_cache[cacheKey] = aMin
-	return aMin
-
-
-def a_min_search(L,k,q,s,alpha,m):
-	# binary search to find  max{a : alpha/2 > 1-betaHigh(a)}
-	# we assume betaHigh(a) is non-increasing, that it decreases (or does not
-	# .. increase) as a increases
-	maxIterations = ceil(log2(s))
-	halfAlpha = alpha/2
-
-	betaHigh = beta_high(L,k,q,s,m,s)
-	if (halfAlpha > 1-betaHigh):
-		return s
-	betaHigh = beta_high(L,k,q,s,m,0)
-	if (not halfAlpha > 1-betaHigh):
-		return None              # (no suitable a exists)
-
-	# invariant:
-	#   aLo < aHi  and  1-beta_high(aLo) < alpha/2 <= 1-beta_high(aHi)
-
-	aLo = 0
-	aHi = s
-	iterationNum = 0
-	while (aLo < aHi-1):
-		iterationNum += 1
-		assert (iterationNum <= maxIterations), "internal error"
-		aMid = (aLo + aHi) // 2  # (truncated division)
-		betaHigh = beta_high(L,k,q,s,m,aMid)
-		if (halfAlpha > 1-betaHigh):
-			aLo = aMid           # 1-beta_high(new aLo) < alpha/2
-		else:
-			aHi = aMid           # alpha/2 <= 1-beta_high(new aHi)
-
-	return aLo
-
-
-a_max_cache = {}
-def a_max(L,k,q,s,alpha,m):
-	# aMax = min{a : a/2 > betaLow(a)}
-	assert (0<alpha<1)
-	assert (m>=2)
-	assert (s>=1)
-
-	if (useCache):
-		cacheKey = (L,k,q,s,alpha,m)
-		if (cacheKey in a_max_cache):
-			return a_max_cache[cacheKey]
-
-	aMax = a_max_search(L,k,q,s,alpha,m)
-	if (aMax == None):
-		aMax = s if (q < .5) else 0  # (no suitable a was found)
-
-	if (useCache):
-		a_max_cache[cacheKey] = aMax
+		a_min_cache[cacheKey] = aMax
 	return aMax
 
 
-def a_max_search(L,k,q,s,alpha,m):
-	# binary search to find min{a : alpha/2 > betaLow(a)}
+def a_min_search(L,k,q,s,alpha,m):
+	# binary search to find min{a : m*alpha > betaLow(a)}
 	# we assume betaLow(a) is non-increasing, that it decreases (or does not
 	# .. increase) as a increases
 	maxIterations = ceil(log2(s))
-	halfAlpha = alpha/2
 
-	betaLow = beta_low(L,k,q,s,m,0)
-	if (halfAlpha > betaLow):
+	betaLow = beta_low(L,k,q,s,m,0)    # beta_low for a=0
+	if (m*alpha > betaLow):
 		return 0
-	betaLow = beta_low(L,k,q,s,m,s)
-	if (not halfAlpha > betaLow):
-		return None              # (no suitable a exists)
+	betaLow = beta_low(L,k,q,s,m,s)    # beta_low for a=s
+	if (m*alpha <= betaLow):
+		return None                    # (no suitable a exists)
 
 	# invariant:
-	#   aLo < aHi  and  beta_low(aLo) >= alpha/2 > beta_low(aHi)
+	#   aLo < aHi  and  beta_low(aLo) >= m*alpha > beta_low(aHi)
 
 	aLo = 0
 	aHi = s
@@ -354,24 +295,77 @@ def a_max_search(L,k,q,s,alpha,m):
 		assert (iterationNum <= maxIterations), "internal error"
 		aMid = (aLo + aHi) // 2  # (truncated division)
 		betaLow = beta_low(L,k,q,s,m,aMid)
-		if (halfAlpha > betaLow):
-			aHi = aMid           # alpha/2 > beta_low(new aHi)
+		if (m*alpha > betaLow):
+			aHi = aMid                 # m*alpha > beta_low(new aHi)
 		else:
-			aLo = aMid           # beta_low(new aLo) >= alpha/2
+			aLo = aMid                 # beta_low(new aLo) >= m*alpha
 
 	return aHi
 
 
+a_max_cache = {}
+def a_max(L,k,q,s,alpha,m):
+	# aMin = max{a : a/2 > 1-betaHigh(a)}
+	assert (0<alpha<1)
+	assert (m>=2)
+	assert (s>=1)
+
+	if (useCache):
+		cacheKey = (L,k,q,s,alpha,m)
+		if (cacheKey in a_max_cache):
+			return a_max_cache[cacheKey]
+
+	aMin = a_max_search(L,k,q,s,alpha,m)
+	if (aMin == None):
+		aMin = s if (q < .5) else 0  # (no suitable a was found)
+
+	if (useCache):
+		a_max_cache[cacheKey] = aMin
+	return aMin
+
+
+def a_max_search(L,k,q,s,alpha,m):
+	# binary search to find  max{a : m*(2-alpha) < betaHigh(a)}
+	# we assume betaHigh(a) is non-increasing, that it decreases (or does not
+	# .. increase) as a increases
+	maxIterations = ceil(log2(s))
+
+	betaHigh = beta_high(L,k,q,s,m,s)  # beta_high for a=s
+	if (m*(2-alpha) < betaHigh):
+		return s
+	betaHigh = beta_high(L,k,q,s,m,0)  # beta_high for a=0
+	if (m*(2-alpha) >= betaHigh):
+		return None                    # (no suitable a exists)
+
+	# invariant:
+	#   aLo < aHi  and  beta_high(aLo) > m*(2-alpha) >= beta_high(aHi)
+
+	aLo = 0
+	aHi = s
+	iterationNum = 0
+	while (aLo < aHi-1):
+		iterationNum += 1
+		assert (iterationNum <= maxIterations), "internal error"
+		aMid = (aLo + aHi) // 2  # (truncated division)
+		betaHigh = beta_high(L,k,q,s,m,aMid)
+		if (m*(2-alpha) < betaHigh):
+			aLo = aMid                 # beta_high(new aLo) > m*(2-alpha)
+		else:
+			aHi = aMid                 # m*(2-alpha) >= beta_high(new aHi)
+
+	return aLo
+
+
 def j_low(L,k,q,s,alpha,m):
-	# no need to cache this since a_min is cached
-	aMin = a_min(L,k,q,s,alpha,m)
-	return aMin / float(s)
-
-
-def j_high(L,k,q,s,alpha,m):
 	# no need to cache this since a_max is cached
 	aMax = a_max(L,k,q,s,alpha,m)
 	return aMax / float(s)
+
+
+def j_high(L,k,q,s,alpha,m):
+	# no need to cache this since a_min is cached
+	aMin = a_min(L,k,q,s,alpha,m)
+	return aMin / float(s)
 
 
 jaccard_bounds_cache = {}
