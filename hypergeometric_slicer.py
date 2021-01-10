@@ -44,12 +44,12 @@ moduleName = "slicer.v2"
 #==========
 
 useCache = True
-useNLowSanityCheck = True
-useNHighSanityCheck = True
+doNLowSanityCheck = False
+doNHighSanityCheck = False
 showQLeftSearch = False
 showQRightSearch = False
 #showZetaCalls = False
-doMonotonicityCheck = False
+doJMonotonicityCheck = False
 
 
 zeta_cache = {}
@@ -89,17 +89,17 @@ def zeta(L,s,Nmutated,a):
 
 
 n_low_cache = {}
-def n_low(L,k,q,m,i):
+def n_low(L,k,q,m,i,clip=True,blindToCache=False):
 	assert (m>=2)
 	assert (0<=i<=m)
 	if (useCache):
 		cacheKey = (L,k,q,m,i)
-		if (cacheKey in n_low_cache):
+		if (not blindToCache) and (cacheKey in n_low_cache):
 			return n_low_cache[cacheKey]
 
 	clipped = False
 	if (i == 0):
-		nLow = 0.0                        # (practical limit)
+		nLow = 0.0                        # (practical limit, because zi=inf)
 		clipped = True
 	else:
 		alphai = float(i) / m
@@ -108,27 +108,27 @@ def n_low(L,k,q,m,i):
 		varN = var_n_mutated(L,k,r1,q=q)
 		sigma = sqrt(varN)
 		nLow = L*q - zi*sigma
-		if (nLow < 0):
+		if (clip) and (nLow < 0):
 			nLow = 0.0                    # (practical limit)
 			clipped = True
 
-	if (useCache):
+	if (useCache):                        # (nb: we cache even if we are blind)
 		n_low_cache[cacheKey] = (nLow,clipped)
 	return (nLow,clipped)
 
 
 n_high_cache = {}
-def n_high(L,k,q,m,i):
+def n_high(L,k,q,m,i,clip=True,blindToCache=False):
 	assert (m>=2)
 	assert (0<=i<=m)
 	if (useCache):
 		cacheKey = (L,k,q,m,i)
-		if (cacheKey in n_high_cache):
+		if (not blindToCache) and (cacheKey in n_high_cache):
 			return n_high_cache[cacheKey]
 
 	clipped = False
 	if (i == 0):
-		nHigh = float(L)                  # (practical limit)
+		nHigh = float(L)                  # (practical limit, because zi=inf)
 		clipped = True
 	else:
 		alphai = float(i) / m
@@ -137,62 +137,86 @@ def n_high(L,k,q,m,i):
 		varN = var_n_mutated(L,k,r1,q=q)
 		sigma = sqrt(varN)
 		nHigh = L*q + zi*sigma
-		if (nHigh > L):
+		if (clip) and (nHigh > L):
 			nHigh = float(L)              # (practical limit)
 			clipped = True
 
-	if (useCache):
+	if (useCache):                        # (nb: we cache even if we are blind)
 		n_high_cache[cacheKey] = (nHigh,clipped)
 	return (nHigh,clipped)
 
 
-def precompute_n_high_low(L,k,q,m):
+def precompute_n_high_low(L,k,q,m,clip=True,snoop=False):
 	# no need to cache this since n_low and n_high are cached
 
-	nLow  = {}
-	nHigh = {}
+	nLow         = [None] * (m+1)
+	nHigh        = [None] * (m+1)
+	nLowClipped  = [None] * (m+1)
+	nHighClipped = [None] * (m+1)
 
 	for i in range(m+1):
-		(nLow [i],_) = n_low (L,k,q,m,i)
-		(nHigh[i],_) = n_high(L,k,q,m,i)
+		(nLow [i],nLowClipped [i]) = n_low (L,k,q,m,i,clip=clip)
+		(nHigh[i],nHighClipped[i]) = n_high(L,k,q,m,i,clip=clip)
+
+	if (snoop):
+		for i in range(m+1):
+			print("nLow(%d,%d,%.9f,%d,%d) = %.2f%s" \
+			    % (L,k,q,m,i,nLow[i],", clipped" if (nLowClipped[i]) else ""),
+			       file=stderr)
+		for i in range(m+1):
+			print("nHigh(%d,%d,%.9f,%d,%d) = %.2f%s" \
+			    % (L,k,q,m,i,nHigh[i],", clipped" if (nHighClipped[i]) else ""),
+			       file=stderr)
 
 	# (sanity check)
 
-	if (useNLowSanityCheck):
+	if (doNLowSanityCheck):
 		assert (nLow[0] == 0), \
-			   "for L=%d,k=%d,q=%.9f,m=%d n_low(0) = %s (expected 0)" \
+			   "SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d n_low(0) = %s (expected 0)" \
 			 % (L,k,q,m,nLow[0])
 		for i in range(1,m+1):
-			if (nLow[i-1] == 0) and (nLow[i] == 0):
-				continue   # (nLow went out of bounds, avoid sanity check )
-			assert (nLow[i-1] < nLow[i]), \
-				   "for L=%d,k=%d,q=%.9f,m=%d n_low(%d) >= n_low(%d) (%s >= %s)" \
-				 % (L,k,q,m,i-1,i,nLow[i-1],nLow[i])
-		assert (abs(nLow[m] - L*q) < 1e-10)
+			#if (nLow[i-1] == 0) and (nLow[i] == 0):
+			#	continue   # (nLow went out of bounds, avoid sanity check )
+			if (nLow[i-1] >= nLow[i]):
+				print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d n_low(%d) >= n_low(%d) (%s >= %s)" \
+				    % (L,k,q,m,i-1,i,nLow[i-1],nLow[i]),
+				      file=stderr)
+		if (abs(nLow[m] - L*q) >= 1e-10):
+			print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d nLow(%d) = %s (expected %.9f)" \
+			    % (L,k,q,m,m,nLow[m],L*q),
+			      file=stderr)
 
-	if (useNHighSanityCheck):
-		assert (abs(nHigh[m] - L*q) < 1e-10)
+	if (doNHighSanityCheck):
+		if (abs(nHigh[m] - L*q) >= 1e-10):
+			print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d nHigh(%d) = %s (expected %.9f)" \
+			    % (L,k,q,m,m,nHigh[m],L*q),
+			      file=stderr)
 		for i in range(m-1,-1,-1):
-			if (nHigh[i+1] == L) and (nHigh[i] == L):
-				continue   # (nHigh went out of bounds, avoid sanity check )
-			assert (nHigh[i+1] < nHigh[i]), \
-				   "for L=%d,k=%d,q=%.9f,m=%d n_high(%d) >= n_high(%d) (%s >= %s)" \
-				 % (L,k,q,m,i+1,i,nHigh[i+1],nHigh[i])
-		assert (nHigh[0] == L), \
-			   "for L=%d,k=%d,q=%.9f,m=%d n_high(0) = %s (expected %d)" \
-			 % (L,k,q,m,nHigh[0],L)
+			#if (nHigh[i+1] == L) and (nHigh[i] == L):
+			#	continue   # (nHigh went out of bounds, avoid sanity check )
+			if (nHigh[i+1] >= nHigh[i]):
+				print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d n_high(%d) >= n_high(%d) (%s >= %s)" \
+				    % (L,k,q,m,i+1,i,nHigh[i+1],nHigh[i]),
+				      file=stderr)
+		if (nHigh[0] != L):
+			print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d n_high(0) = %s (expected %d)" \
+			    % (L,k,q,m,nHigh[0],L),
+			      file=stderr)
 
-	return (nLow,nHigh)
+	return (nLow,nHigh,nLowClipped,nHighClipped)
 
 
 beta_low_cache = {}
 def beta_low(L,k,q,s,m,a):
-	# in the manuscript, beta_low(a) is the lower bound of B(a)
+	# in the manuscript, beta_low(a) is 2m times Bl(a)
 	assert (m>=2)
 	if (useCache):
 		cacheKey = (L,k,q,s,m,a)
 		if (cacheKey in beta_low_cache):
 			return beta_low_cache[cacheKey]
+
+	if (doNLowSanityCheck) or (doNHighSanityCheck):
+		precompute_n_high_low(L,k,q,m)   # (sanity check is implemented therein)
 
 	hadAClippedLow = hadAClippedHigh = False
 	betaLow = 0.0
@@ -220,7 +244,7 @@ def beta_low(L,k,q,s,m,a):
 
 beta_high_cache = {}
 def beta_high(L,k,q,s,m,a):
-	# in the manuscript, beta_high(a) is the upper bound of B(a)
+	# in the manuscript, beta_high(a) is 2m times Bh(a)
 	assert (m>=2)
 	if (useCache):
 		cacheKey = (L,k,q,s,m,a)
@@ -251,28 +275,30 @@ def beta_high(L,k,q,s,m,a):
 	return betaHigh
 
 
-a_min_cache = {}
-def a_min(L,k,q,s,alpha,m):
-	# aMax = min{a : a/2 > betaLow(a)}
+a_max_cache = {}
+def a_max(L,k,q,s,alpha,m):
+	# aMax = min{a>=0 : alpha/2 > Bl(a)}
+	#      = min{a>=0 : alpha/2 > betaLow(a)/2m}
+	#      = min{a>=0 : m*alpha > betaLow(a)}
 	assert (0<alpha<1)
 	assert (m>=2)
 	assert (s>=1)
 
 	if (useCache):
 		cacheKey = (L,k,q,s,alpha,m)
-		if (cacheKey in a_min_cache):
-			return a_min_cache[cacheKey]
+		if (cacheKey in a_max_cache):
+			return a_max_cache[cacheKey]
 
-	aMax = a_min_search(L,k,q,s,alpha,m)
+	aMax = a_max_search(L,k,q,s,alpha,m)
 	if (aMax == None):
 		aMax = s if (q < .5) else 0  # (no suitable a was found)
 
 	if (useCache):
-		a_min_cache[cacheKey] = aMax
+		a_max_cache[cacheKey] = aMax
 	return aMax
 
 
-def a_min_search(L,k,q,s,alpha,m):
+def a_max_search(L,k,q,s,alpha,m):
 	# binary search to find min{a : m*alpha > betaLow(a)}
 	# we assume betaLow(a) is non-increasing, that it decreases (or does not
 	# .. increase) as a increases
@@ -304,29 +330,32 @@ def a_min_search(L,k,q,s,alpha,m):
 	return aHi
 
 
-a_max_cache = {}
-def a_max(L,k,q,s,alpha,m):
-	# aMin = max{a : a/2 > 1-betaHigh(a)}
+a_min_cache = {}
+def a_min(L,k,q,s,alpha,m):
+	# aMin = max{a : alpha/2 > Bh(a)}
+	#      = max{a : alpha/2 > 1-betaHigh(a)/2m}
+	#      = max{a : m*alpha > 2m-betaHigh(a)}
+	#      = max{a : m*(2-alpha) < betaHigh(a)}
 	assert (0<alpha<1)
 	assert (m>=2)
 	assert (s>=1)
 
 	if (useCache):
 		cacheKey = (L,k,q,s,alpha,m)
-		if (cacheKey in a_max_cache):
-			return a_max_cache[cacheKey]
+		if (cacheKey in a_min_cache):
+			return a_min_cache[cacheKey]
 
-	aMin = a_max_search(L,k,q,s,alpha,m)
+	aMin = a_min_search(L,k,q,s,alpha,m)
 	if (aMin == None):
 		aMin = s if (q < .5) else 0  # (no suitable a was found)
 
 	if (useCache):
-		a_max_cache[cacheKey] = aMin
+		a_min_cache[cacheKey] = aMin
 	return aMin
 
 
-def a_max_search(L,k,q,s,alpha,m):
-	# binary search to find  max{a : m*(2-alpha) < betaHigh(a)}
+def a_min_search(L,k,q,s,alpha,m):
+	# binary search to find max{a : m*(2-alpha) < betaHigh(a)}
 	# we assume betaHigh(a) is non-increasing, that it decreases (or does not
 	# .. increase) as a increases
 	maxIterations = ceil(log2(s))
@@ -358,15 +387,15 @@ def a_max_search(L,k,q,s,alpha,m):
 
 
 def j_low(L,k,q,s,alpha,m):
-	# no need to cache this since a_max is cached
-	aMax = a_max(L,k,q,s,alpha,m)
-	return aMax / float(s)
-
-
-def j_high(L,k,q,s,alpha,m):
 	# no need to cache this since a_min is cached
 	aMin = a_min(L,k,q,s,alpha,m)
 	return aMin / float(s)
+
+
+def j_high(L,k,q,s,alpha,m):
+	# no need to cache this since a_max is cached
+	aMax = a_max(L,k,q,s,alpha,m)
+	return aMax / float(s)
 
 
 jaccard_bounds_cache = {}
@@ -436,7 +465,7 @@ def q_confidence_interval(L,k,s,alpha,m,jHat,epsilon=1e-6):
 		if (cacheKey in q_confidence_interval_cache):
 			return q_confidence_interval_cache[cacheKey]
 
-	if (doMonotonicityCheck):
+	if (doJMonotonicityCheck):
 		j_low_high_monotonicity_check(L,k,s,alpha,m)
 
 	qLeft  = q_left_search (L,k,s,alpha,m,jHat,epsilon=epsilon/2)
@@ -517,32 +546,48 @@ def q_right_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 	return qLo
 
 
-def j_low_high_monotonicity_check(L,k,s,alpha,m):
+def j_low_high_monotonicity_check(L,k,s,alpha,m,snoop=False):
 	# empirically 'validate' the following:
-	#   - jLow(q)  is non-increasing as q increases from 0 to 1
-	#   - jHigh(q) is non-increasing as q increases from 0 to 1
-
-	# WARNING: THIS TEST HAS NOT BEEN TESTED NOR DEBUGGED, ONLY CODED
-
-	prevJLow = prevJHigh = prevQ = None
+	#   - j_low(q)  is non-increasing as q increases from 0 to 1
+	#   - j_high(q) is non-increasing as q increases from 0 to 1
 
 	qStart = .01
 	qEnd   = 1-qStart
 	qStep  = .01
 
+	qValues = []
 	q = qStart
 	while (q <= qEnd):
+		qValues += [q]
+		q += qStep
+
+	if (snoop):
+		for q in qValues:
+			jLow = j_low(L,k,q,s,alpha,m)
+			print("jLow(%d,%d,%.2f,%d,%.3f,%d) = %s" \
+			    % (L,k,q,s,alpha,m,"None" if (jLow == None) else "%.9f"%jLow),
+			       file=stderr)
+
+		for q in qValues:
+			jHigh = j_high(L,k,q,s,alpha,m)
+			print("jHigh(%d,%d,%.2f,%d,%.3f,%d) = %s" \
+			    % (L,k,q,s,alpha,m,"None" if (jHigh == None) else "%.9f"%jHigh),
+			       file=stderr)
+
+	prevJLow = prevJHigh = prevQ = None
+	for q in qValues:
 		jLow  = j_low (L,k,q,s,alpha,m)
 		jHigh = j_high(L,k,q,s,alpha,m)
-		if (prevJLow != None):
+
+		if (prevJLow != None) and (jLow != None):
 			assert (jLow <= prevJLow), \
-			       "jLow(%d,%d,%.9f,%d,%.3f,%d) = %.9f <  %.9f = jLow(%d,%d,%.9f,%d,%.3f,%d) violates monotonicity" \
+			       "MONOTONICTY VIOLATION: jLow(%d,%d,%.2f,%d,%.3f,%d) = %.9f <  %.9f = jLow(%d,%d,%.9f,%d,%.3f,%d) violates monotonicity" \
 			     % (L,k,prevQ,s,alpha,m,
 			        jLow,prevJLow,
 			        L,k,q,s,alpha,m)  
-		if (prevJHigh != None):
+		if (prevJHigh != None) and (jHigh != None):
 			assert (jHigh <= prevJHigh), \
-			       "jHigh(%d,%d,%.9f,%d,%.3f,%d) = %.9f <  %.9f = jHigh(%d,%d,%.9f,%d,%.3f,%d) violates monotonicity" \
+			       "MONOTONICTY VIOLATION: jHigh(%d,%d,%.2f,%d,%.3f,%d) = %.9f <  %.9f = jHigh(%d,%d,%.9f,%d,%.3f,%d) violates monotonicity" \
 			     % (L,k,prevQ,s,alpha,m,
 			        jHigh,prevJHigh,
 			        L,k,q,s,alpha,m)  
@@ -550,7 +595,6 @@ def j_low_high_monotonicity_check(L,k,s,alpha,m):
 		prevJLow  = jLow
 		prevJHigh = jHigh
 		prevQ = q
-		q += qStep
 
 #==========
 # formulas for Nmutated

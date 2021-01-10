@@ -104,15 +104,15 @@ def main():
 	if ("nocache" in debug):
 		hgslicer.useCache = False
 
-	if ("nosanity" in debug):
-		hgslicer.useNLowSanityCheck = False
-		hgslicer.useNHighSanityCheck = False
+	if ("jmonotonicity" in debug):
+		hgslicer.doJMonotonicityCheck = True
 
-	if ("showzeta" in debug):
-		hgslicer.showZetaCalls = True
+	if ("nsanity" in debug):
+		hgslicer.doNLowSanityCheck  = True
+		hgslicer.doNHighSanityCheck = True
 
-	if ("monotonicity" in debug):
-		hgslicer.doMonotonicityCheck = True
+	#if ("showzeta" in debug):
+	#	hgslicer.showZetaCalls = True
 
 	slicerName = hgslicer.moduleName
 	if ("noshortcut" in debug): slicerName += ",noshortcut"
