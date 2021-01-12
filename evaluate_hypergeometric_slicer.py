@@ -132,6 +132,7 @@ def main():
 
 	paramsToTrials    = {}
 	paramsToSuccesses = {}
+	paramsToSpoiled   = {}
 
 	recordNum = 0
 	for trial in read_simulation_records(stdin,
@@ -163,25 +164,39 @@ def main():
 				print("processing record %d, sketch size %d" % (recordNum,s),file=stderr)
 			params = (L,k,r1,confidence,q,s)
 			if (params not in paramsToTrials):
-				paramsToTrials[params] = paramsToSuccesses[params] = 0
+				paramsToTrials   [params] = 0
+				paramsToSuccesses[params] = 0
+				paramsToSpoiled  [params] = 0
 			jaccardObserved = trial.nIntersection[s] / s
 
 			r1Left = r1Right = float("nan")
 			paramsToTrials[params] += 1
 			if ("noshortcut" in debug):
 				(r1Left,r1Right) = hgslicer.r1_confidence_interval(LforCI,k,s,alpha,numSlices,jaccardObserved)
-				success = 1 if (r1Left <= r1 <= r1Right) else 0
+				try:
+					success = 1 if (r1Left <= r1 <= r1Right) else 0
+				except ValueError:
+					success = None
 				if ("showcalls" in debug):
-					print("hgslicer.r1_confidence_interval(%s,%s,%s,%s,%s,%s) = %d" \
-					    % (LforCI,k,s,alpha,numSlices,jaccardObserved,success),
+					print("hgslicer.r1_confidence_interval(%s,%s,%s,%s,%s,%s) = %s" \
+					    % (LforCI,k,s,alpha,numSlices,jaccardObserved,
+					       "NA" if (success == None) else "%d"%success),
 					       file=stderr)
 			else:
-				success = hgslicer.truth_in_jaccard_bounds(LforCI,k,r1,s,alpha,numSlices,jaccardObserved)
+				try:
+					success = hgslicer.truth_in_jaccard_bounds(LforCI,k,r1,s,alpha,numSlices,jaccardObserved)
+				except ValueError:
+					success = None
 				if ("showcalls" in debug):
-					print("hgslicer.truth_in_jaccard_bounds(%s,%s,%s,%s,%s,%s,%s) = %d" \
-					    % (LforCI,k,r1,s,alpha,numSlices,jaccardObserved,success),
+					print("hgslicer.truth_in_jaccard_bounds(%s,%s,%s,%s,%s,%s,%s) = %s" \
+					    % (LforCI,k,r1,s,alpha,numSlices,jaccardObserved,
+					       "NA" if (success == None) else "%d"%success),
 					       file=stderr)
-			paramsToSuccesses[params] += success
+
+			if (success == None):
+				paramsToSpoiled[params] += 1
+			else:
+				paramsToSuccesses[params] += success
 
 			if (detailsF != None):
 				print("%d %.3f %d %s %.3f %d %d %.9f %.9f %.9f %.9f %d" \
@@ -194,13 +209,18 @@ def main():
 	if (detailsF != None):
 		detailsF.close()
 
-	print("#%s" % "\t".join(["module","r1","k","L","confidence","s","m","trials","q","inCI"]))
+	print("#%s" % "\t".join(["module","r1","k","L","confidence","s","m","trials","q","inCI","spoiled"]))
 	for params in parameterSets:
 		(L,k,r1,confidence,q,s) = params
-		print("%s\t%.3f\t%d\t%d\t%.3f\t%d\t%d\t%d\t%.9f\t%.3f" \
+		denom = paramsToTrials[params] - paramsToSpoiled[params]
+		if (denom == 0):
+			inCIstr = "NA"
+		else:
+			inCIstr = "%.3f" % (paramsToSuccesses[params]/denom)
+		print("%s\t%.3f\t%d\t%d\t%.3f\t%d\t%d\t%d\t%.9f\t%s\t%d" \
 		    % (slicerName,
 		       r1,k,L,confidence,s,numSlices,
-		       paramsToTrials[params],q,paramsToSuccesses[params]/paramsToTrials[params]))
+		       paramsToTrials[params],q,inCIstr,paramsToSpoiled[params]))
 
 
 # read_simulation_records--
