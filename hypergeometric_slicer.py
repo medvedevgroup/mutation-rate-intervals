@@ -32,8 +32,10 @@ except ModuleNotFoundError:
 #   v2 passes an indication of whether clipping occurred back to beta_low() and
 #	.. beta_high() so that only the first clipped result contributes to the
 #	.. corresponding sum
+#	v3 adds more sanity checks and revises what happens for a_min and a_max
+#	.. when the corresponding condition is not true for any value of a
 
-moduleName = "slicer.v2"
+moduleName = "slicer.v3"
 
 #==========
 # 'hypergeometric slicer' formulas for sketch jaccard (from Nmutated)
@@ -65,7 +67,7 @@ def zeta(L,s,Nmutated,a):
 	#   k = number of red balls drawn = a-1 (not a)
 	#   M = total number of balls     = L+Nmutated
 	#   n = number of red balls       = L-Nmutated
-	#   N = number of draws           = s 
+	#   N = number of draws           = s
 
 	#if (showZetaCalls):
 	#	callStr = "zeta(%s,%s,%s,%s) = 1-hypergeom.cdf(%s,%s,%s,%s) = %.12f" \
@@ -229,12 +231,12 @@ def beta_low(L,k,q,s,m,a):
 
 		if (not lowIsClipped) or (not hadAClippedLow):
 			betaLow += zeta(L,s,ceil(nLow),a)
-		if (lowIsClipped): 
+		if (lowIsClipped):
 			hadAClippedLow = True
 
 		if (not highIsClipped) or (not hadAClippedHigh):
 			betaLow += zeta(L,s,ceil(nHigh),a)
-		if (highIsClipped): 
+		if (highIsClipped):
 			hadAClippedHigh = True
 
 	if (useCache):
@@ -262,12 +264,12 @@ def beta_high(L,k,q,s,m,a):
 
 		if (not lowIsClipped) or (not hadAClippedLow):
 			betaHigh += zeta(L,s,floor(nLow),a)
-		if (lowIsClipped): 
+		if (lowIsClipped):
 			hadAClippedLow = True
 
 		if (not highIsClipped) or (not hadAClippedHigh):
 			betaHigh += zeta(L,s,floor(nHigh),a)
-		if (highIsClipped): 
+		if (highIsClipped):
 			hadAClippedHigh = True
 
 	if (useCache):
@@ -291,7 +293,8 @@ def a_max(L,k,q,s,alpha,m):
 
 	aMax = a_max_search(L,k,q,s,alpha,m)
 	if (aMax == None):
-		aMax = s if (q < .5) else 0  # (no suitable a was found)
+		# no suitable a exists; returning s will give j_high=1
+		aMax = s
 
 	if (useCache):
 		a_max_cache[cacheKey] = aMax
@@ -347,7 +350,11 @@ def a_min(L,k,q,s,alpha,m):
 
 	aMin = a_min_search(L,k,q,s,alpha,m)
 	if (aMin == None):
-		aMin = s if (q < .5) else 0  # (no suitable a was found)
+		# no suitable a was found; any value would be invalid
+		print ("WARNING: aMin(%d,%d,%.9f,%d,%.3f,%d) has no value" \
+		     % (L,k,q,s,alpha,m),
+		       file=stderr)
+		raise ValueError
 
 	if (useCache):
 		a_min_cache[cacheKey] = aMin
@@ -390,6 +397,12 @@ def j_low(L,k,q,s,alpha,m):
 	# no need to cache this since a_min is cached
 	aMin = a_min(L,k,q,s,alpha,m)
 	return aMin / float(s)
+
+def j_low_no_exception(L,k,q,s,alpha,m):
+	try:
+		return j_low(L,k,q,s,alpha,m)
+	except ValueError:
+		return None
 
 
 def j_high(L,k,q,s,alpha,m):
@@ -479,28 +492,39 @@ def q_confidence_interval(L,k,s,alpha,m,jHat,epsilon=1e-6):
 def q_left_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 	# find minimum qLeft s.t. j_low(qLeft) = jHat, within epsilon
 	#
-	# we assume that jLow(q) is decreasing (actually, non- increasing) as q
+	# we assume that jLow(q) is decreasing (actually, non-increasing) as q
 	# increases from 0 to 1
 	maxIterations = 1 + ceil(-log2(epsilon))
 
+	qLo = 0.0
 	jLow = j_low(L,k,0.0,s,alpha,m)     # (this corresponds to qLo = 0.0)
-	if   (jLow == jHat): return 0.0
-	elif (jLow <  jHat): return 0.0     # (no suitable q exists)
+	if (showQRightSearch):
+		print("initial qLo: j_low(%.12f)=%.12f" % (qLo,jLow),file=stderr)
+	if (jLow == jHat):
+		return 0.0
+	if (jLow < jHat):
+		# (no suitable q exists)
+		# return 0.0
+		raise ValueError
 
-	jLow = j_low(L,k,1.0,s,alpha,m)     # (this corresponds to qHi = 1.0)
-	if (jLow > jHat): return 1.0        # (no suitable q exists)
+	qHi = 1.0
+	jLow = jLow(L,k,1.0,s,alpha,m)     # (this corresponds to qHi = 1.0)
+	if (showQRightSearch):
+		print("initial qHi: j_low(%.12f)=%.12f" % (qHi,jLow),file=stderr)
+	if (jLow > jHat):
+		# (no suitable q exists)
+		# return 1.0
+		raise ValueError
 
 	# invariant:
 	#   qLo < qHi  and  j_low(qLo) > jHat >= j_low(qHi)
 
-	qLo = 0.0
-	qHi = 1.0
 	iterationNum = 0
 	while (qLo < qHi-epsilon):
 		iterationNum += 1
 		assert (iterationNum <= maxIterations), "internal error"
 		qMid = (qLo + qHi) / 2
-		jLow = j_low(L,k,qMid,s,alpha,m)
+		jLow = jLow(L,k,qMid,s,alpha,m)
 		if (showQLeftSearch):
 			print("iter %d: qLo=%.12f qHi=%.12f j_low(%.12f)=%.12f" % (iterationNum,qLo,qHi,qMid,jLow),file=stderr)
 		elif (jLow <= jHat):
@@ -514,22 +538,34 @@ def q_left_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 def q_right_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 	# find maximum qRight s.t. j_high(qRight) = jHat, within epsilon
 	#
-	# we assume that jHigh(q) is decreasing (actually, non- increasing) as q
+	# we assume that jHigh(q) is decreasing (actually, non-increasing) as q
 	# increases from 0 to 1
 	maxIterations = 1 + ceil(-log2(epsilon))
 
-	jHigh = j_high(L,k,0.0,s,alpha,m)   # (this corresponds to qLo = 0.0)
-	if (jHigh < jHat): return 0.0       # (no suitable q exists)
+	qLo = 0.0
+	jHigh = j_high(L,k,qLo,s,alpha,m)   # (this corresponds to qLo = 0.0)
+	if (showQRightSearch):
+		print("initial qLo: j_high(%.12f)=%.12f" % (qLo,jHigh),file=stderr)
+	if (jHigh < jHat):
+		# (no suitable q exists)
+		# return 0.0
+		raise ValueError
 
-	jHigh = j_high(L,k,1.0,s,alpha,m)   # (this corresponds to qHi = 1.0)
-	if   (jHigh == jHat): return 1.0
-	elif (jHigh >  jHat): return 1.0    # (no suitable q exists)
+	qHi = 1.0
+	jHigh = j_high(L,k,qHi,s,alpha,m)   # (this corresponds to qHi = 1.0)
+	if (showQRightSearch):
+		print("initial qHi: j_high(%.12f)=%.12f" % (qHi,jHigh),file=stderr)
+	if (jHigh == jHat):
+		return qHi
+	if (jHigh > jHat):
+		# (no suitable q exists)
+		# return 1.0
+		raise ValueError
+
 
 	# invariant:
 	#   qLo < qHi  and  j_high(qLo) >= jHat > j_high(qHi)
 
-	qLo = 0.0
-	qHi = 1.0
 	iterationNum = 0
 	while (qLo < qHi-epsilon):
 		iterationNum += 1
@@ -546,51 +582,67 @@ def q_right_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 	return qLo
 
 
-def j_low_high_monotonicity_check(L,k,s,alpha,m,snoop=False):
+def j_low_high_monotonicity_check(L,k,s,alpha,m,step=.01,qValues=None,snoop=False):
 	# empirically 'validate' the following:
 	#   - j_low(q)  is non-increasing as q increases from 0 to 1
 	#   - j_high(q) is non-increasing as q increases from 0 to 1
 
-	qStart = .01
-	qEnd   = 1-qStart
-	qStep  = .01
+	if (qValues != None):
+		qValues = list(set(qValues))  # (copy list and remove duplicates)
+		qValues.sort()
+		assert (qValues[0]  >= 0)
+		assert (qValues[-1] <= 1)
+	else:
+		qStart = step
+		qEnd   = 1-qStart
+		qStep  = step
 
-	qValues = []
-	q = qStart
-	while (q <= qEnd):
-		qValues += [q]
-		q += qStep
+		qValues = []
+		q = qStart
+		while (q <= qEnd):
+			qValues += [q]
+			q += qStep
 
 	if (snoop):
 		for q in qValues:
-			jLow = j_low(L,k,q,s,alpha,m)
-			print("jLow(%d,%d,%.2f,%d,%.3f,%d) = %s" \
+			jLow = j_low_no_exception(L,k,q,s,alpha,m)
+			print("jLow(%d,%d,%.9f,%d,%.3f,%d) = %s" \
 			    % (L,k,q,s,alpha,m,"None" if (jLow == None) else "%.9f"%jLow),
 			       file=stderr)
 
 		for q in qValues:
 			jHigh = j_high(L,k,q,s,alpha,m)
-			print("jHigh(%d,%d,%.2f,%d,%.3f,%d) = %s" \
+			print("jHigh(%d,%d,%.9f,%d,%.3f,%d) = %s" \
 			    % (L,k,q,s,alpha,m,"None" if (jHigh == None) else "%.9f"%jHigh),
 			       file=stderr)
 
 	prevJLow = prevJHigh = prevQ = None
 	for q in qValues:
-		jLow  = j_low (L,k,q,s,alpha,m)
+		jLow  = j_low_no_exception(L,k,q,s,alpha,m)
 		jHigh = j_high(L,k,q,s,alpha,m)
 
-		if (prevJLow != None) and (jLow != None):
-			assert (jLow <= prevJLow), \
-			       "MONOTONICTY VIOLATION: jLow(%d,%d,%.2f,%d,%.3f,%d) = %.9f <  %.9f = jLow(%d,%d,%.9f,%d,%.3f,%d) violates monotonicity" \
+		if (jLow == None):
+			print("jLow(%d,%d,%.9f,%d,%.3f,%d) = None" \
+			    % (L,k,q,s,alpha,m),
+			       file=stderr)
+		elif (prevJLow != None):
+			if (jLow > prevJLow):
+				print(("MONOTONICTY VIOLATION:"
+				     + " jLow(%d,%d,%.9f,%d,%.3f,%d) = %.9f"
+				     + " > %.9f = jLow(%d,%d,%.9f,%d,%.3f,%d)")
 			     % (L,k,prevQ,s,alpha,m,
 			        jLow,prevJLow,
-			        L,k,q,s,alpha,m)  
+			        L,k,q,s,alpha,m),
+			       file=stderr)
 		if (prevJHigh != None) and (jHigh != None):
-			assert (jHigh <= prevJHigh), \
-			       "MONOTONICTY VIOLATION: jHigh(%d,%d,%.2f,%d,%.3f,%d) = %.9f <  %.9f = jHigh(%d,%d,%.9f,%d,%.3f,%d) violates monotonicity" \
+			if (jHigh > prevJHigh):
+				print(("MONOTONICTY VIOLATION:"
+				     + " jHigh(%d,%d,%.9f,%d,%.3f,%d) = %.9f"
+				     + " > %.9f = jHigh(%d,%d,%.9f,%d,%.3f,%d)")
 			     % (L,k,prevQ,s,alpha,m,
 			        jHigh,prevJHigh,
-			        L,k,q,s,alpha,m)  
+			        L,k,q,s,alpha,m),
+			       file=stderr)
 
 		prevJLow  = jLow
 		prevJHigh = jHigh
