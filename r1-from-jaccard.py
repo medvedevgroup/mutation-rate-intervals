@@ -3,7 +3,6 @@
 from sys  import argv,stdin,stdout,stderr,exit
 from math import ceil,log10
 import kmer_mutation_formulas_v1 as v1
-import hypergeometric_slicer as hgslicer
 import mutation_model_simulator as mms
 
 

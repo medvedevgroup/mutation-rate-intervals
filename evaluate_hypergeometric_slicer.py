@@ -172,8 +172,8 @@ def main():
 			r1Left = r1Right = float("nan")
 			paramsToTrials[params] += 1
 			if ("noshortcut" in debug):
-				(r1Left,r1Right) = hgslicer.r1_confidence_interval(LforCI,k,s,alpha,numSlices,jaccardObserved)
 				try:
+					(r1Left,r1Right) = hgslicer.r1_confidence_interval(LforCI,k,s,alpha,numSlices,jaccardObserved)
 					success = 1 if (r1Left <= r1 <= r1Right) else 0
 				except ValueError:
 					success = None

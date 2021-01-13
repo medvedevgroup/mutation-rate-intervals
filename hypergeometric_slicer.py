@@ -508,7 +508,7 @@ def q_left_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 		raise ValueError
 
 	qHi = 1.0
-	jLow = jLow(L,k,1.0,s,alpha,m)     # (this corresponds to qHi = 1.0)
+	jLow = j_low(L,k,1.0,s,alpha,m)     # (this corresponds to qHi = 1.0)
 	if (showQRightSearch):
 		print("initial qHi: j_low(%.12f)=%.12f" % (qHi,jLow),file=stderr)
 	if (jLow > jHat):
@@ -524,7 +524,7 @@ def q_left_search(L,k,s,alpha,m,jHat,epsilon=0.5e-6):
 		iterationNum += 1
 		assert (iterationNum <= maxIterations), "internal error"
 		qMid = (qLo + qHi) / 2
-		jLow = jLow(L,k,qMid,s,alpha,m)
+		jLow = j_low(L,k,qMid,s,alpha,m)
 		if (showQLeftSearch):
 			print("iter %d: qLo=%.12f qHi=%.12f j_low(%.12f)=%.12f" % (iterationNum,qLo,qHi,qMid,jLow),file=stderr)
 		elif (jLow <= jHat):

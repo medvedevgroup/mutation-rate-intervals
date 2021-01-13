@@ -2,7 +2,6 @@
 
 from sys  import argv,stdin,stdout,stderr,exit
 from math import ceil,log10
-import hypergeometric_slicer as hgslicer
 import mutation_model_simulator as mms
 
 

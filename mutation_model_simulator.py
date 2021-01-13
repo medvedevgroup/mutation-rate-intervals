@@ -42,7 +42,7 @@ Example 2:
 
 from sys    import argv,stdin,stdout,stderr,exit
 from random import Random
-import hypergeometric_slicer as hgslicer
+from hypergeometric_slicer import q_to_r1,q_to_jaccard,jaccard_to_r1,jaccard_to_q
 
 try:
 	from numpy.random import RandomState
@@ -199,7 +199,7 @@ def r1_simulations(numSimulations,L,k,r1,sketchSizes,r1Low,r1High,prngSeed=None,
 		mutationModel.generate()
 		(_,nMutated) = mutationModel.count()
 		qObs = nMutated / L
-		r1Obs = hgslicer.q_to_r1(k,qObs)
+		r1Obs = q_to_r1(k,qObs)
 		if (r1Low <= r1Obs <= r1High):
 			counts["no sketch"] += 1
 
@@ -207,7 +207,7 @@ def r1_simulations(numSimulations,L,k,r1,sketchSizes,r1Low,r1High,prngSeed=None,
 			for sketchSize in sketchSizes:
 				nIntersection = mutationModel.simulate_sketch(nMutated,sketchSize)
 				jObs = nIntersection / sketchSize
-				r1Obs = hgslicer.jaccard_to_r1(k,jObs)
+				r1Obs = jaccard_to_r1(k,jObs)
 				if (r1Low <= r1Obs <= r1High):
 					counts[sketchSize] += 1
 
@@ -227,7 +227,7 @@ def r1_simulations(numSimulations,L,k,r1,sketchSizes,r1Low,r1High,prngSeed=None,
 
 def nmut_simulations(numSimulations,L,k,nMut,sketchSizes,nMutLow,nMutHigh,prngSeed=None,reportProgress=None):
 	q = nMut / L
-	r1 = hgslicer.q_to_r1(k,q)
+	r1 = q_to_r1(k,q)
 	mutationModel = MutationModel(L,k,r1,sketchSizes=sketchSizes,prngSeed=prngSeed)
 
 	counts = {"no sketch":0}
@@ -249,7 +249,7 @@ def nmut_simulations(numSimulations,L,k,nMut,sketchSizes,nMutLow,nMutHigh,prngSe
 			for sketchSize in sketchSizes:
 				nIntersection = mutationModel.simulate_sketch(nMutated,sketchSize)
 				jObs = nIntersection / sketchSize
-				nMutObs = L * hgslicer.jaccard_to_q(k,jObs)
+				nMutObs = L * jaccard_to_q(k,jObs)
 				if (nMutLow <= nMutObs <= nMutHigh):
 					counts[sketchSize] += 1
 
@@ -269,7 +269,7 @@ def nmut_simulations(numSimulations,L,k,nMut,sketchSizes,nMutLow,nMutHigh,prngSe
 # kmers.
 
 def jaccard_simulations(numSimulations,L,k,jaccard,sketchSizes,jLow,jHigh,prngSeed=None,reportProgress=None):
-	r1 = hgslicer.jaccard_to_r1(k,jaccard)
+	r1 = jaccard_to_r1(k,jaccard)
 	mutationModel = MutationModel(L,k,r1,sketchSizes=sketchSizes,prngSeed=prngSeed)
 
 	counts = {"no sketch":0}
@@ -285,7 +285,7 @@ def jaccard_simulations(numSimulations,L,k,jaccard,sketchSizes,jLow,jHigh,prngSe
 		mutationModel.generate()
 		(_,nMutated) = mutationModel.count()
 		qObs = nMutated / L
-		jObs = hgslicer.q_to_jaccard(qObs)
+		jObs = q_to_jaccard(qObs)
 		if (jLow <= jObs <= jHigh):
 			counts["no sketch"] += 1
 

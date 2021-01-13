@@ -2,7 +2,6 @@
 
 from sys  import argv,stdin,stdout,stderr,exit
 from math import ceil,log10
-import hypergeometric_slicer as hgslicer
 import mutation_model_simulator as mms
 
 
@@ -116,7 +115,14 @@ def main():
 	print("\t".join(header))
 
 	for (jHatIx,jHat) in enumerate(jaccardObserved):
-		(r1Low,r1High) = hgslicer.r1_confidence_interval(L,k,s,alpha,m,jHat)
+		try:
+			(r1Low,r1High) = hgslicer.r1_confidence_interval(L,k,s,alpha,m,jHat)
+		except ValueError:
+			print ("unable to compute r1_confidence_interval(%d,%d,%d,%.3f,%d,%.9f)"
+			     % (L,k,s,alpha,m,jHat),
+			       file=stderr)
+			continue
+
 		line = ["%d\t%d\t%d\t%.3f\t%d\t%.6f\t%.6f\t%.6f" % (L,k,s,confidence,m,jHat,r1Low,r1High)]
 		if (numSimulations != None):
 			numDigits = max(2,int(ceil(log10(numSimulations))))
