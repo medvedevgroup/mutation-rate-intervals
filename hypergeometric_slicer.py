@@ -51,7 +51,7 @@ doNHighSanityCheck = False
 showQLeftSearch = False
 showQRightSearch = False
 #showZetaCalls = False
-doJMonotonicityCheck = False
+doJMonotonicityCheck = True
 
 
 zeta_cache = {}

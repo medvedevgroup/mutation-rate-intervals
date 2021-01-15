@@ -99,7 +99,9 @@ def main():
 	if ("nocache" in debug):
 		hgslicer.useCache = False
 
-	if ("jmonotonicity" in debug):
+	if ("nojmonotonicity" in debug):
+		hgslicer.doJMonotonicityCheck = False
+	else:
 		hgslicer.doJMonotonicityCheck = True
 
 	if ("nsanity" in debug):
