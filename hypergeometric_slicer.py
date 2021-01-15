@@ -179,8 +179,8 @@ def precompute_n_high_low(L,k,q,m,clip=True,snoop=False):
 		for i in range(1,m+1):
 			#if (nLow[i-1] == 0) and (nLow[i] == 0):
 			#	continue   # (nLow went out of bounds, avoid sanity check )
-			if (nLow[i-1] >= nLow[i]):
-				print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d n_low(%d) >= n_low(%d) (%s >= %s)" \
+			if (nLow[i-1] > nLow[i]):
+				print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d n_low(%d) > n_low(%d) (%s >= %s)" \
 				    % (L,k,q,m,i-1,i,nLow[i-1],nLow[i]),
 				      file=stderr)
 		if (abs(nLow[m] - L*q) >= 1e-10):
@@ -196,8 +196,8 @@ def precompute_n_high_low(L,k,q,m,clip=True,snoop=False):
 		for i in range(m-1,-1,-1):
 			#if (nHigh[i+1] == L) and (nHigh[i] == L):
 			#	continue   # (nHigh went out of bounds, avoid sanity check )
-			if (nHigh[i+1] >= nHigh[i]):
-				print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d n_high(%d) >= n_high(%d) (%s >= %s)" \
+			if (nHigh[i+1] > nHigh[i]):
+				print("SANITY CHECK: for L=%d,k=%d,q=%.9f,m=%d n_high(%d) > n_high(%d) (%s >= %s)" \
 				    % (L,k,q,m,i+1,i,nHigh[i+1],nHigh[i]),
 				      file=stderr)
 		if (nHigh[0] != L):

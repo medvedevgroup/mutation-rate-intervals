@@ -51,6 +51,7 @@ def main():
 	numSimulations     = None
 	prngSeed           = None
 	reportProgress     = None
+	debug              = []
 
 	for arg in argv[1:]:
 		if ("=" in arg):
