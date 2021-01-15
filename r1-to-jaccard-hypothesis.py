@@ -4,6 +4,7 @@ from sys  import argv,stdin,stdout,stderr,exit
 from math import floor,ceil,log10
 import kmer_mutation_formulas_v1 as v1
 import mutation_model_simulator as mms
+import hypergeometric_slicer as hgslicer
 
 
 def usage(s=None):
@@ -36,6 +37,7 @@ usage: r1-to-jaccard-hypothesis.py [options]
 
 
 def main():
+	global reportProgress,debug
 
 	# parse the command line
 
@@ -68,6 +70,10 @@ def main():
 			prngSeed = argVal
 		elif (arg.startswith("--progress=")):
 			reportProgress = int_with_unit(argVal)
+		elif (arg == "--debug"):
+			debug += ["debug"]
+		elif (arg.startswith("--debug=")):
+			debug += argVal.split(",")
 		elif (arg.startswith("--")):
 			usage("unrecognized option: %s" % arg)
 		else:
@@ -86,6 +92,16 @@ def main():
 		ntSequenceLength = kmerSequenceLength + (kmerSize-1)
 	elif (ntSequenceLength == None):
 		ntSequenceLength = 1000 + (kmerSize-1)
+
+	if ("nocache" in debug):
+		hgslicer.useCache = False
+
+	if ("jmonotonicity" in debug):
+		hgslicer.doJMonotonicityCheck = True
+
+	if ("nsanity" in debug):
+		hgslicer.doNLowSanityCheck  = True
+		hgslicer.doNHighSanityCheck = True
 
 	# compute the interval(s)
 

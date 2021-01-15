@@ -3,6 +3,7 @@
 from sys  import argv,stdin,stdout,stderr,exit
 from math import ceil,log10
 import mutation_model_simulator as mms
+import hypergeometric_slicer as hgslicer
 
 
 def usage(s=None):
@@ -41,6 +42,7 @@ usage: r1-from-minhash-jaccard.py [options]
 
 
 def main():
+	global reportProgress,debug
 
 	# parse the command line
 
@@ -79,6 +81,10 @@ def main():
 			prngSeed = argVal
 		elif (arg.startswith("--progress=")):
 			reportProgress = int_with_unit(argVal)
+		elif (arg == "--debug"):
+			debug += ["debug"]
+		elif (arg.startswith("--debug=")):
+			debug += argVal.split(",")
 		elif (arg.startswith("--")):
 			usage("unrecognized option: %s" % arg)
 		else:
@@ -100,6 +106,16 @@ def main():
 		ntSequenceLength = kmerSequenceLength + (kmerSize-1)
 	elif (ntSequenceLength == None):
 		ntSequenceLength = 1000 + (kmerSize-1)
+
+	if ("nocache" in debug):
+		hgslicer.useCache = False
+
+	if ("jmonotonicity" in debug):
+		hgslicer.doJMonotonicityCheck = True
+
+	if ("nsanity" in debug):
+		hgslicer.doNLowSanityCheck  = True
+		hgslicer.doNHighSanityCheck = True
 
 	# compute the confidence interval(s)
 
