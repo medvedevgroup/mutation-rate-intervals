@@ -65,7 +65,9 @@ def main():
 		if ("=" in arg):
 			argVal = arg.split("=",1)[1]
 
-		if (arg.startswith("--confidence=")) or (arg.startswith("C=")):
+		if (arg in ["--help","-help","--h","-h"]):
+			usage()
+		elif (arg.startswith("--confidence=")) or (arg.startswith("C=")):
 			confidence = parse_probability(argVal)
 		elif (arg.startswith("--slices=")) \
 		 or (arg.startswith("m=")) or (arg.startswith("--m=")) \

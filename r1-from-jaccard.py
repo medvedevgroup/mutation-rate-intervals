@@ -57,7 +57,9 @@ def main():
 		if ("=" in arg):
 			argVal = arg.split("=",1)[1]
 
-		if (arg.lower().startswith("--jhat=")) or (arg.upper().startswith("J=")):
+		if (arg in ["--help","-help","--h","-h"]):
+			usage()
+		elif (arg.lower().startswith("--jhat=")) or (arg.upper().startswith("J=")):
 			jaccardObserved += list(map(parse_probability,argVal.split(",")))
 		elif (arg.startswith("--length=")) or (arg.startswith("l=")):
 			ntSequenceLength = int_with_unit(argVal)

@@ -98,7 +98,9 @@ def main():
 		if ("=" in arg):
 			argVal = arg.split("=",1)[1]
 
-		if (arg.startswith("--kmer=")) or (arg.startswith("K=")):
+		if (arg in ["--help","-help","--h","-h"]):
+			usage()
+		elif (arg.startswith("--kmer=")) or (arg.startswith("K=")):
 			kmerSize = int(argVal)
 		elif (arg.startswith("--sketch=")) or (arg.startswith("S=")):
 			if (sketchSizes == None): sketchSizes = []

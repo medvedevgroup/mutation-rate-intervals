@@ -53,7 +53,9 @@ def main():
 		if ("=" in arg):
 			argVal = arg.split("=",1)[1]
 
-		if (arg.lower().startswith("--r1=")) or (arg.upper().startswith("R1=")):
+		if (arg in ["--help","-help","--h","-h"]):
+			usage()
+		elif (arg.lower().startswith("--r1=")) or (arg.upper().startswith("R1=")):
 			r1Values += list(map(parse_probability,argVal.split(",")))
 		elif (arg.startswith("--length=")) or (arg.startswith("l=")):
 			ntSequenceLength = int_with_unit(argVal)

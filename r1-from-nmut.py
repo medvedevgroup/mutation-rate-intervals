@@ -57,7 +57,9 @@ def main():
 		if ("=" in arg):
 			argVal = arg.split("=",1)[1]
 
-		if (arg.lower().startswith("--nmut=")) or (arg.upper().startswith("N=")):
+		if (arg in ["--help","-help","--h","-h"]):
+			usage()
+		elif (arg.lower().startswith("--nmut=")) or (arg.upper().startswith("N=")):
 			nMutationObserved += list(map(int_with_unit,argVal.split(",")))
 		elif (arg.startswith("--length=")) or (arg.startswith("l=")):
 			ntSequenceLength = int_with_unit(argVal)

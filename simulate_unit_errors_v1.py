@@ -98,7 +98,9 @@ def main():
 		if ("=" in arg):
 			argVal = arg.split("=",1)[1]
 
-		if (arg.startswith("--kmer=")) or (arg.startswith("K=")):
+		if (arg in ["--help","-help","--h","-h"]):
+			usage()
+		elif (arg.startswith("--kmer=")) or (arg.startswith("K=")):
 			kmerSize = int(argVal)
 		elif (arg.startswith("--set=")) or (arg.startswith("N=")) or (arg.startswith("L=")):
 			kmerSequenceLength = int_with_unit(argVal)
