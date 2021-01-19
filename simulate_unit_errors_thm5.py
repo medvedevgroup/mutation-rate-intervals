@@ -9,7 +9,7 @@ from math         import sqrt,floor,ceil
 from gzip         import open as gzip_open
 from numpy.random import RandomState
 from scipy.stats  import hypergeom
-from kmer_mutation_formulas_v1 \
+from kmer_mutation_formulas_thm5 \
                   import p_mutated,exp_n_mutated,var_n_mutated,estimate_r1_from_n_mutated, \
                          confidence_interval_r1_from_n_mutated,in_confidence_interval_q_from_n_mutated, \
                          exp_n_island,var_n_island,estimate_r1_from_n_island,impossible_n_island, \
@@ -18,7 +18,7 @@ from kmer_mutation_formulas_v1 \
 
 def usage(s=None):
 	message = """
-usage: simulate_unit_errors [options]
+usage: simulate_unit_errors_thm5 [options]
   --k=<N>                   (K=) kmer size
                             (default is 28)
   --n=<N>                   (N= or L=) sequence length (number of KMERS in the

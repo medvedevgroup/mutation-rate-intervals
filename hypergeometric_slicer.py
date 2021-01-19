@@ -6,6 +6,9 @@ described in "The statistics of kmers from a sequence undergoing a simple
 mutation process without spurious matches," Blanca, Harris, Koslicki and
 Medvedev.
 
+The underlying theory is described in theorem 6 in the bioRxiv version of the
+manuscript at https://www.biorxiv.org/content/10.1101/2021.01.15.426881v1
+
 k:  Kmer length.
 L:  Sequence length; specifically, the number of complete KMERS in the sequence.
     The corresponding nucleotide sequence length would be L+k-1.

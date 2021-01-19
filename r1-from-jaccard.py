@@ -2,7 +2,7 @@
 
 from sys  import argv,stdin,stdout,stderr,exit
 from math import ceil,log10
-import kmer_mutation_formulas_v1 as v1
+import kmer_mutation_formulas_thm5 as thm5
 import mutation_model_simulator as mms
 import hypergeometric_slicer as hgslicer
 
@@ -115,7 +115,7 @@ def main():
 	L = ntSequenceLength - (kmerSize-1)
 	k = kmerSize
 	alpha = 1 - confidence
-	z = v1.probit(1-alpha/2)
+	z = thm5.probit(1-alpha/2)
 
 	header = ["L","k","conf","jaccard","r1Low","r1High"]
 	if (numSimulations != None):
@@ -124,10 +124,10 @@ def main():
 
 	for (jaccardIx,jaccard) in enumerate(jaccardObserved):
 		nMut = L * (1-jaccard)/(1+jaccard)
-		q1 = v1.q_for_n_mutated_high(L,k,nMut,z)
-		q2 = v1.q_for_n_mutated_low (L,k,nMut,z)
-		r1Low  = v1.q_to_r1(k,q1)
-		r1High = v1.q_to_r1(k,q2)
+		q1 = thm5.q_for_n_mutated_high(L,k,nMut,z)
+		q2 = thm5.q_for_n_mutated_low (L,k,nMut,z)
+		r1Low  = thm5.q_to_r1(k,q1)
+		r1High = thm5.q_to_r1(k,q2)
 		line = ["%d\t%d\t%.3f\t%.6f\t%.6f\t%.6f" % (L,k,confidence,jaccard,r1Low,r1High)]
 		if (numSimulations != None):
 			numDigits = max(2,int(ceil(log10(numSimulations))))

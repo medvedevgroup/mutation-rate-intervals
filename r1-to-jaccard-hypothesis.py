@@ -2,7 +2,7 @@
 
 from sys  import argv,stdin,stdout,stderr,exit
 from math import floor,ceil,log10
-import kmer_mutation_formulas_v1 as v1
+import kmer_mutation_formulas_thm5 as thm5
 import mutation_model_simulator as mms
 import hypergeometric_slicer as hgslicer
 
@@ -113,7 +113,7 @@ def main():
 	L = ntSequenceLength - (kmerSize-1)
 	k = kmerSize
 	alpha = 1 - confidence
-	z = v1.probit(1-alpha/2)
+	z = thm5.probit(1-alpha/2)
 
 	header = ["L","k","sig","r1","jLow","jHigh"]
 	if (numSimulations != None):
@@ -121,9 +121,9 @@ def main():
 	print("\t".join(header))
 
 	for (r1Ix,r1) in enumerate(r1Values):
-		q = v1.r1_to_q(k,r1)
-		qLow  = v1.n_low (L,k,q,z) / L
-		qHigh = v1.n_high(L,k,q,z) / L
+		q = thm5.r1_to_q(k,r1)
+		qLow  = thm5.n_low (L,k,q,z) / L
+		qHigh = thm5.n_high(L,k,q,z) / L
 		jLow  = (1-qHigh)/(1+qHigh)
 		jHigh = (1-qLow )/(1+qLow )
 		line = ["%d\t%d\t%.3f\t%.6f\t%.6f\t%.6f" % (L,k,confidence,r1,jLow,jHigh)]

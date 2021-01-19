@@ -10,14 +10,14 @@ from random import Random,seed as random_seed, \
                    sample as random_sample
 from math   import sqrt,floor,ceil
 from gzip   import open as gzip_open
-from kmer_mutation_formulas_v1 \
+from kmer_mutation_formulas_thm5 \
             import p_mutated,exp_n_mutated,var_n_mutated,estimate_r1_from_n_mutated, \
                    confidence_interval_r1_from_n_mutated,in_confidence_interval_q_from_n_mutated
 
 
 def usage(s=None):
 	message = """
-usage: cat fasta | simulate_nucleotide_errors [options]
+usage: cat fasta | simulate_nucleotide_errors_thm5 [options]
   --k=<N>                   (K=) kmer size
                             (default is 28)
   --sequences=<N>           (T=) number of mutated sequences to generate

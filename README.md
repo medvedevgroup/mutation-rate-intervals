@@ -115,18 +115,18 @@ r1-from-nmut.py,
 r1-from-jaccard.py,
 and r1-from-minhash-jaccard.py.
 * A module to compute the theoretical confidence intervals for the sketching
-mutation model described as theorem 3 in the manuscript:
+mutation model described as theorem 6 in the manuscript:
 hypergeometric_slicer.py.
 * A module to compute the theoretical confidence intervals for r<sub>1</sub> from an
-observation of Nmut described as corollary 1 in the manuscript:
-kmer_mutation_formulas_v1.py.
+observation of Nmut described as theorem 5 in the manuscript:
+kmer_mutation_formulas_thm5.py.
 * Two programs to generate simulations: simulate_unit_errors.py and
 simulate_nucleotide_errors.py.
 * A program to evaluate how well the simulations conform to the theoretical
-confidence intervals of theorem 3: evaluate_hypergeometric_slicer.py.
-* Earlier versions of the simulation programs, simulate_unit_errors_v1.py and
-simulate_nucleotide_errors_v1.py. These perform both simulation and
-evaluation for corollary 1. 
+confidence intervals of theorem 6: evaluate_hypergeometric_slicer.py.
+* Earlier versions of the simulation programs, simulate_unit_errors_thm5.py and
+simulate_nucleotide_errors_thm5.py. These perform both simulation and
+evaluation for theorem 5. 
 
 Above we describe only the confidence interval command-line programs. The
 simulation and evaluation programs are described in the reproducibility folder.
@@ -441,8 +441,100 @@ of BS(A), BS(B), and BS(A union B) for a sketch of the given size. The Jaccard
 estimate is nIntersection/s.
 ```
 
+simulate_unit_errors_thm5.py
+
+```bash  
+usage: simulate_unit_errors_thm5 [options]
+  --k=<N>                   (K=) kmer size
+                            (default is 28)
+  --n=<N>                   (N= or L=) sequence length (number of KMERS in the
+                            sequence)
+                            (default is 100)
+  --sequences=<N>           (T=) number of sequence pairs to generate
+                            (default is 1)
+  --poisson=<probability>   (P=) (required) inject random sequencing errors
+                            (substitutions); each base suffers a substitution
+                            error with the given probability (poisson-like
+                            noise)
+  --bernoulli=<probability> (B= or E=) (required) inject random sequencing
+                            errors (substitutions); exactly
+                            round(L*<probability>) errors will occur in the
+                            sequence (bernoulli-like noise)
+  --linear                  L kmers from linear sequences of length L+k-1
+                            (this is the default)
+  --circular                L kmers from circular sequences of length L
+  --confidence=<p>          (C=) size of confidence interval
+                            (default is 99%)
+  --noinverse               for confidence interval tests, do NOT use inverse
+                            functions
+                            (by default inverse functions are used)
+  --nosort                  don't sort output
+                            (by default output is sorted by nMutated)
+  --stats=<filename>        write stats to a file
+                            (by default stats are written to stderr)
+  --seed=<string>           set random seed
+  --progress=<number>       periodically report how many sequence pairs we've
+                            tested
+
+Conceptually, generate pairs of sequences in the unit interval and report the
+distribution of the number of mutated kmers as well as other related stats.
+
+A 'sequence pair' is a random circular sequence and a mutated version of it.
+The mutated version is consistent with a model where the sequence represents
+hash values of kmers in a sequence of nucleotides, and the individual
+nucleotides are subject to error, with the caveat that no duplications are
+possible.
+
+This program doesn't actually generate sequence pairs. Instead, it generates
+the positions of the mutations.
+```
+
+simulate_nucleotide_errors_thm5.py
+
+```bash  
+usage: cat fasta | simulate_nucleotide_errors_thm5 [options]
+  --k=<N>                   (K=) kmer size
+                            (default is 28)
+  --sequences=<N>           (T=) number of mutated sequences to generate
+                            (default is 1)
+  --poisson=<probability>   (P=) (required) inject random sequencing errors
+                            (substitutions); each base suffers a substitution
+                            error with the given probability (poisson-like
+                            noise)
+  --bernoulli=<probability> (B= or E=) (required) inject random sequencing
+                            errors (substitutions); exactly
+                            round(L*<probability>) errors will occur in the
+                            sequence (bernoulli-like noise)
+  --linear                  L kmers from linear sequences of length L+k-1
+                            (this is the default)
+  --circular                L kmers from circular sequences of length L
+  --confidence=<p>          (C=) size of confidence interval
+                            (default is 99%)
+  --noinverse               for confidence interval tests, do NOT use inverse
+                            functions
+                            (by default inverse functions are used)
+  --nosort                  don't sort output
+                            (by default output is sorted by nMutated)
+  --stats=<filename>        write stats to a file
+                            (by default stats are written to stderr)
+  --mutated=<filename>      file to write the mutated sequences to
+  --mutateeonly             just write out the mutated sequences and quit
+  --seed=<string>           set random seed
+  --progress=<number>       periodically report how many sequence pairs we've
+                            tested
+
+Repeatedly apply the specified mutation model to a single input sequence and
+report the distribution of the number of mutated kmers as well as other
+related stats.
+```
 
 ### Citation
 If using this software, please cite
-* Antonio Blanca, Robert S. Harris, David Koslicki and Paul Medvedev, "The statistics of k-mers from a sequence undergoing a simple mutation process without spurious matches", submitted 
+* Antonio Blanca, Robert S. Harris, David Koslicki and Paul Medvedev, "The
+statistics of k-mers from a sequence undergoing a simple mutation process
+without spurious matches", submitted
+
+Theorem numbers mentioned in this readme, and in the code, use the numbering in
+the bioRxiv version of the manuscript at
+https://www.biorxiv.org/content/10.1101/2021.01.15.426881v1
 

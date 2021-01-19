@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 Formulas relating to kmers in strings subjected to independent/uniform
-nucleotide substitutions.
+nucleotide substitutions, and the "Nmut hypothesis test theorem"/"Nmut
+confidence interval theorem", as described in "The statistics of kmers from a
+sequence undergoing a simple mutation process without spurious matches,"
+Blanca, Harris, Koslicki and Medvedev.
+
+The underlying theory is described in theorem 5 in the bioRxiv version of the
+manuscript at https://www.biorxiv.org/content/10.1101/2021.01.15.426881v1
 
 k:  Kmer length.
 L:  Sequence length; specifically, the number of complete KMERS in the sequence.
@@ -126,7 +132,7 @@ def in_confidence_interval_q_from_n_mutated(L,k,r1,alpha,nMutatedObserved,useInv
 #	find q s.t. nHigh(q) == nMut
 #
 # Note: nMut==0 is a special case. When q=0 the formula for variance has a zero
-# in the denominator and thus fails to compute. Hoever, the limit of that
+# in the denominator and thus fails to compute. However, the limit of that
 # formula as q goes to zero is zero (and in fact, it is easy to see that the
 # variance is truly zero when q=0). This means the formulas for nLow and nHigh,
 # e.g. L*q-z*sqrt(varN), are zero when q=0. Thus if nMut=0, 0 is the q for
@@ -159,7 +165,8 @@ def q_for_n_mutated_high(L,k,nMut,z,checkDerivative=True):
 	func = lambda q: n_high(L,k,q,z)-nMut
 	qSoln = brentq(func,qLeft,qRight)
 
-	if (checkDerivative):
+	if (checkDerivative) and (qSoln != 1):
+		# limit(dNHigh) as q->1 appears to be non-negative
 		alpha = 2*(1-inverse_probit(z))    # because z = probit(1-alpha/2)
 		dNHigh = n_high_derivative(L,k,qSoln,alpha)
 		#print (("for nHigh(q)=%s (for L=%d k=%d) d(nHigh)/dr at q=%.9f is %9f") \
@@ -174,8 +181,15 @@ def q_for_n_mutated_high(L,k,nMut,z,checkDerivative=True):
 
 # q_for_n_mutated_low--
 #	find q s.t. nLow(q) == nMut
+#
+# Note: nMut==L is a special case. When q=1 all kmers are mutated and thus
+# var(nMut)=0. The formula for nLow then simplifies as
+#	nLow = Lq - z*sqrt(varN) = L*q = L
+# Moreover, if q<1 then varN>0 and nLow < Lq < L.  Thus if nMut=L, 1 is the q
+# for which nLow(q) == nMut.
 
 def q_for_n_mutated_low(L,k,nMut,z,checkDerivative=True):
+	if (nMut == L): return 1.0   # special case, see note above
 	qRight = 1
 	qLeft = 1e-5
 	attemptsLeft = 10
@@ -199,6 +213,14 @@ def q_for_n_mutated_low(L,k,nMut,z,checkDerivative=True):
 	qSoln = brentq(func,qLeft,qRight)
 
 	if (checkDerivative):
+		# limit(dNLow) as q->1 appears to be negative; note that this assert
+		# should *never* trigger, since we handled nMut==L as a special case
+		# and thus the solver should never produce qSoln==1
+		assert (qSoln != 1), \
+		       ("solution of nLow(q)=%s (for L=%d k=%d) fails derivative test" 
+		      + "\nd(nLow)/dr at q=%.9f is negative") \
+		     % (nMut,L,k,qSoln)
+
 		alpha = 2*(1-inverse_probit(z))    # because z = probit(1-alpha/2)
 		dNLow = n_low_derivative(L,k,qSoln,alpha)
 		#print (("for nLow(q)=%s (for L=%d k=%d) d(nLow)/dr at q=%.9f is %9f") \
@@ -228,7 +250,7 @@ def n_high(L,k,q,z):
 def n_low_derivative(L,k,q,alpha):
 	r1 = q_to_r1(k,q)
 	z = probit(1-alpha/2)
-	derivativeMiddle = (k*L*(1-q))/(1-r1)
+	derivativeMiddle = (k*L) if (r1==1) else ((k*L*(1-q))/(1-r1))
 	derivativeOffset = \
 	    ((1-q)*(4*q+r1*(-6+2*k+2*r1-2*k*r1+L*(-2-2*(-1+k)*r1+k*r1**2)+2*(1-q)*(3-3*k*(1-r1)-r1-k**3*r1**2+k**2*(-2*r1+r1**2)+L*(1-r1+k*(2-r1)*r1+2*k**2*r1**2))))) \
 	     / (2*(1-r1)*r1**2*sqrt((1-q)*(-2*(1-r1)+L*(2-r1)*r1)+(1-q)**2*(2*(1-r1)+k*(2-r1)*r1+k**2*r1**2+L*(-2*r1+r1**2-2*k*r1**2))))
@@ -238,7 +260,7 @@ def n_low_derivative(L,k,q,alpha):
 def n_high_derivative(L,k,q,alpha):
 	r1 = q_to_r1(k,q)
 	z = probit(1-alpha/2)
-	derivativeMiddle = (k*L*(1-q))/(1-r1)
+	derivativeMiddle = (k*L) if (r1==1) else ((k*L*(1-q))/(1-r1))
 	derivativeOffset = \
 	    ((1-q)*(4*q+r1*(-6+2*k+2*r1-2*k*r1+L*(-2-2*(-1+k)*r1+k*r1**2)+2*(1-q)*(3-3*k*(1-r1)-r1-k**3*r1**2+k**2*(-2*r1+r1**2)+L*(1-r1+k*(2-r1)*r1+2*k**2*r1**2))))) \
 	     / (2*(1-r1)*r1**2*sqrt((1-q)*(-2*(1-r1)+L*(2-r1)*r1)+(1-q)**2*(2*(1-r1)+k*(2-r1)*r1+k**2*r1**2+L*(-2*r1+r1**2-2*k*r1**2))))
