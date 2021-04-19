@@ -188,9 +188,9 @@ def main():
 	# off specifically choosing the hash seed
 
 	if (hashSeed == None):
-		hashSeed = hashSeed & 0xFFFFFFFF  # (mmh3 seeds are limited to 32 bits)
-	else:
 		hashSeed = int(0x100000000 * unit_random())
+	else:
+		hashSeed = hashSeed & 0xFFFFFFFF  # (mmh3 seeds are limited to 32 bits)
 
 	if (prngSeed != None):
 		random_seed(prngSeed.encode("utf-8"))
