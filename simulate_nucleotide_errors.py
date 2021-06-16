@@ -47,7 +47,7 @@ usage: cat fasta | simulate_nucleotide_errors [options]
   --stats=<filename>        write stats to a file
                             (by default stats are written to stderr)
   --mutated=<filename>      file to write the mutated sequences to
-  --mutatedonly             just write out the mutated sequences and quit
+  --mutateonly              just write out the mutated sequences and quit
   --seed=<string>           set random seed
   --hash=<int>              set seed for hash function (only used for sketches);
                             it is highly recommended that users specify the
@@ -123,7 +123,7 @@ def main():
 			statsFilename = argVal
 		elif (arg.startswith("--mutated=")):
 			mutatedFilename = argVal
-		elif (arg == "--mutateonly"):
+		elif (arg in ["--mutateonly","--mutatedonly"]):
 			mutateOnly = True
 		elif (arg.startswith("--seed=")):
 			prngSeed = argVal
