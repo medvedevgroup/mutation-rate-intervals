@@ -31,10 +31,6 @@ usage: simulate_unit_errors [options]
                             (substitutions); each base suffers a substitution
                             error with the given probability (poisson-like
                             noise)
-  --bernoulli=<probability> (B= or E=) (required) inject random sequencing
-                            errors (substitutions); exactly
-                            round(L*<probability>) errors will occur in the
-                            sequence (bernoulli-like noise)
   --linear                  L kmers from linear sequences of length L+k-1
                             (this is the default)
   --circular                L kmers from circular sequences of length L
@@ -106,8 +102,7 @@ def main():
 			noiseKind = "poisson"
 			pSubstitution = parse_probability(argVal)
 		elif (arg.startswith("--bernoulli=")) or (arg.startswith("--error=")) or (arg.startswith("B=")) or (arg.startswith("E=")):
-			noiseKind = "bernoulli"
-			pSubstitution = parse_probability(argVal)
+			usage("the bernoulli noise model is not currently supported")
 		elif (arg == "--linear"):
 			sequenceType = "linear"
 		elif (arg == "--circular"):
@@ -134,9 +129,6 @@ def main():
 
 	if (numSequences == None):
 		numSequences = 1
-
-	if (noiseKind == None):
-		usage("you must specify either poisson or bernoulli error model")
 
 	if (sequenceType == "circular"):
 		# all the estimator code assumes linear sequences
@@ -181,18 +173,8 @@ def main():
 		                  (kmerSequenceLength+kmerSize-1,kmerSize,pSubstitution,
 		                   count_mutated_kmers_linear_naive if ("naive" in debug) else count_mutated_kmers_linear,
 		                   count_islands_linear)
-	elif (noiseKind == "bernoulli") and (sequenceType == "linear"):
-		mutationModel = BernoulliModel \
-		                  (kmerSequenceLength+kmerSize-1,kmerSize,pSubstitution,
-		                   count_mutated_kmers_linear_naive if ("naive" in debug) else count_mutated_kmers_linear,
-		                   count_islands_linear)
 	elif (noiseKind == "poisson") and (sequenceType == "circular"):
 		mutationModel = PoissonModel \
-		                  (kmerSequenceLength,kmerSize,pSubstitution,
-		                   count_mutated_kmers_circular_naive if ("naive" in debug) else count_mutated_kmers_circular,
-		                   count_islands_circular)
-	elif (noiseKind == "bernoulli") and (sequenceType == "circular"):
-		mutationModel = BernoulliModel \
 		                  (kmerSequenceLength,kmerSize,pSubstitution,
 		                   count_mutated_kmers_circular_naive if ("naive" in debug) else count_mutated_kmers_circular,
 		                   count_islands_circular)
@@ -387,31 +369,6 @@ class PoissonModel(object):
 			return 0    # .. case that seems perfectly legitimate
 		nIntersection = hypergeom.rvs(L+N,s,L-N,random_state=prng)
 		return nIntersection
-
-
-# BernoulliModel--
-#	Generate a sequence of bernoulli-type errors, and report the number of
-#	errors, mutated kmers, and islands.
-
-class BernoulliModel(object):
-
-	def __init__(self,ntSequenceLength,kmerSize,pSubstitution,mutatedKmerCounter,islandCounter):
-		self.ntSequenceLength   = ntSequenceLength
-		self.kmerSize           = kmerSize
-		self.pSubstitution      = pSubstitution
-		self.mutatedKmerCounter = mutatedKmerCounter
-		self.islandCounter      = islandCounter
-
-	def generate(self):
-		self.errorSeq = []
-		nErrors = remainingErrors = round(pSubstitution * ntSequenceLength)
-		for remainingSeqLen in range(ntSequenceLength,0,-1):
-			if (remainingSeqLen*unit_random() >= remainingErrors):
-				self.errorSeq += [0]
-			else:
-				self.errorSeq += [1]
-				remainingErrors -= 1
-		return self.errorSeq
 
 
 # count_mutated_kmers_linear--

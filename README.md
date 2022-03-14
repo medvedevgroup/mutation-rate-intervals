@@ -328,10 +328,6 @@ usage: simulate_unit_errors [options]
                             (substitutions); each base suffers a substitution
                             error with the given probability (poisson-like
                             noise)
-  --bernoulli=<probability> (B= or E=) (required) inject random sequencing
-                            errors (substitutions); exactly
-                            round(L*<probability>) errors will occur in the
-                            sequence (bernoulli-like noise)
   --linear                  L kmers from linear sequences of length L+k-1
                             (this is the default)
   --circular                L kmers from circular sequences of length L
@@ -371,10 +367,6 @@ usage: cat fasta | simulate_nucleotide_errors [options]
                             (substitutions); each base suffers a substitution
                             error with the given probability (poisson-like
                             noise)
-  --bernoulli=<probability> (B= or E=) (required) inject random sequencing
-                            errors (substitutions); exactly
-                            round(L*<probability>) errors will occur in the
-                            sequence (bernoulli-like noise)
   --linear                  L kmers from linear sequences of length L+k-1
                             (this is the default)
   --circular                L kmers from circular sequences of length L
@@ -456,10 +448,6 @@ usage: simulate_unit_errors_thm5 [options]
                             (substitutions); each base suffers a substitution
                             error with the given probability (poisson-like
                             noise)
-  --bernoulli=<probability> (B= or E=) (required) inject random sequencing
-                            errors (substitutions); exactly
-                            round(L*<probability>) errors will occur in the
-                            sequence (bernoulli-like noise)
   --linear                  L kmers from linear sequences of length L+k-1
                             (this is the default)
   --circular                L kmers from circular sequences of length L
@@ -501,10 +489,6 @@ usage: cat fasta | simulate_nucleotide_errors_thm5 [options]
                             (substitutions); each base suffers a substitution
                             error with the given probability (poisson-like
                             noise)
-  --bernoulli=<probability> (B= or E=) (required) inject random sequencing
-                            errors (substitutions); exactly
-                            round(L*<probability>) errors will occur in the
-                            sequence (bernoulli-like noise)
   --linear                  L kmers from linear sequences of length L+k-1
                             (this is the default)
   --circular                L kmers from circular sequences of length L

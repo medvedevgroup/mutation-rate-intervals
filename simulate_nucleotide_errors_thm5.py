@@ -26,10 +26,6 @@ usage: cat fasta | simulate_nucleotide_errors_thm5 [options]
                             (substitutions); each base suffers a substitution
                             error with the given probability (poisson-like
                             noise)
-  --bernoulli=<probability> (B= or E=) (required) inject random sequencing
-                            errors (substitutions); exactly
-                            round(L*<probability>) errors will occur in the
-                            sequence (bernoulli-like noise)
   --linear                  L kmers from linear sequences of length L+k-1
                             (this is the default)
   --circular                L kmers from circular sequences of length L
@@ -95,8 +91,7 @@ def main():
 			noiseKind = "poisson"
 			pSubstitution = parse_probability(argVal)
 		elif (arg.startswith("--bernoulli=")) or (arg.startswith("--error=")) or (arg.startswith("B=")) or (arg.startswith("E=")):
-			noiseKind = "bernoulli"
-			pSubstitution = parse_probability(argVal)
+			usage("the bernoulli noise model is not currently supported")
 		elif (arg == "--linear"):
 			sequenceType = "linear"
 		elif (arg == "--circular"):
@@ -131,10 +126,6 @@ def main():
 
 	if (numSequences == None):
 		numSequences = 1
-
-	if (noiseKind == "bernoulli"):
-		# the presence of non-ACGT nucleotides isn't considered
-		usage("the bernoulli noise model is not currently supported")
 
 	if (sequenceType == "circular"):
 		# all the estimator code assumes linear sequences
@@ -180,19 +171,9 @@ def main():
 		mutationModel = PoissonModel \
 		                  (seq,kmerSize,pSubstitution,
 		                   count_mutated_kmers_linear)
-	elif (noiseKind == "bernoulli") and (sequenceType == "linear"):
-		kmerSequenceLength = ntSequenceLength - (kmerSize-1)
-		mutationModel = BernoulliModel \
-		                  (seq,kmerSize,pSubstitution,
-		                   count_mutated_kmers_linear)
 	elif (noiseKind == "poisson") and (sequenceType == "circular"):
 		kmerSequenceLength = ntSequenceLength
 		mutationModel = PoissonModel \
-		                  (seq,kmerSize,pSubstitution,
-		                   count_mutated_kmers_circular)
-	elif (noiseKind == "bernoulli") and (sequenceType == "circular"):
-		kmerSequenceLength = ntSequenceLength
-		mutationModel = BernoulliModel \
 		                  (seq,kmerSize,pSubstitution,
 		                   count_mutated_kmers_circular)
 	else:
@@ -355,7 +336,7 @@ def main():
 	else:
 		statW = max(len(stat) for stat in statsOfInterest)
 		for stat in statsOfInterest:
-			print("%*s = %s" % (stat,statW,statToText[stat]),file=stderr)
+			print("%*s = %s" % (statW,stat,statToText[stat]),file=stderr)
 
 
 # PoissonModel--
@@ -399,32 +380,6 @@ class PoissonModel(object):
 			mutations = ntToMutations[nuc] if (nuc in ntToMutations) else "ACGT"
 			mutatedSeq[pos] = random_choice(mutations)
 		return "".join(mutatedSeq)
-
-
-# BernoulliModel--
-#	Generate a sequence of bernoulli-type errors, and report the number of
-#	errors and mutated kmers.
-
-class BernoulliModel(object):
-
-	def __init__(self,seq,kmerSize,pSubstitution,mutatedKmerCounter):
-		self.seq                = seq
-		self.mutatedSeq         = None
-		self.kmerSize           = kmerSize
-		self.pSubstitution      = pSubstitution
-		self.mutatedKmerCounter = mutatedKmerCounter
-
-	def generate(self):
-		# $$$ this needs to consider that some positions don't have valid ACGT,
-		#     and exclude them from the nErrors computation and from eligibility
-		#     as an error position
-		nErrors = round(pSubstitution * ntSequenceLength)
-		if (nErrors == 0):
-			self.mutatedSeq = self.seq
-		else:
-			errorPositions = random_sample(range(len(self.seq)),nErrors)
-			self.mutatedSeq = self.apply_errors(errorPositions)
-		return self.mutatedSeq
 
 
 # count_mutated_kmers_linear--
